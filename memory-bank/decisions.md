@@ -69,3 +69,13 @@
 - Affected Modules: `src/lib/admin.ts`, `src/modules/admin/**`, `src/app/api/admin/**`, `src/app/admin/**`, `src/components/admin/**`, `Header` (Staff link), `IntegrationControls`, `vitest.config.ts` (adds `@/` alias)
 - Reversal Conditions: Replace role matrix with an invitation/RBAC admin UI (E03); replace demo switches once real supplier capacity and POS flows exist.
 - Status: Active
+
+### Decision #008 — 1,000 concept SKUs vs paid preorder gates
+
+- Date: 2026-11-15
+- Author: Cloud agent (CURSOR_EXECUTE_1000_PRODUCTS)
+- Summary: Import 1,000 `DesignBrief` rows into `Product` as `CONCEPT` with six disabled variants via idempotent seed; paginate `/shop` (30/page); stage ₹99 deposit via `DepositPolicy` and `PaymentIntentType.DEPOSIT` with default fail-closed (`enabled=false`, `ENABLE_DEPOSIT_CHECKOUT` off). No SKU becomes payment-eligible without PREORDER + enabled variant + external revenue gates.
+- Reason: Honest browse-scale catalog without pretending imagery, supplier proof or live charges are ready.
+- Affected Modules: `apps/web/prisma`, `scripts/seed-1000-product-concepts.ts`, `src/lib/catalog.ts`, `src/lib/checkout.ts`, deposit webhook
+- Reversal Conditions: Only after GPU media QA, supplier approvals, and legal/Razorpay sign-off documented in `docs/qa/REVENUE_GO_LIVE_GATES.md`.
+- Status: Active
