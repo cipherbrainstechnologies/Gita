@@ -1,0 +1,2 @@
+import Link from 'next/link';import {canAdmin} from '@/lib/admin';
+export default async function AdminOrders(){if(!await canAdmin())return <div className="page-wrap">Forbidden</div>;return <div className="page-wrap"><p className="kicker dark">OPERATIONS</p><h1 className="page-title">Orders<span>.</span></h1><p>No live orders exist in the preview. Implement verified payment-backed order ledger, batch statuses, delayed fulfilment alerts and refund actions before accepting payments.</p><Link className="text-link" href="/admin">← COMMAND CENTER</Link></div>}

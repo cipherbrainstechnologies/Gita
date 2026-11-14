@@ -1,0 +1,21 @@
+name: Continuous integration
+on: [push, pull_request]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22', cache: 'npm'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Check 1000 candidate datasets
+        run: python scripts/verify_seed.py
+      - name: Install packages
+        run: npm install
+      - name: Prisma generate
+        run: npx prisma generate
+      - name: Typecheck & tests
+        run: npm run typecheck && npm run test
+      - name: Production build
+        run: npm run build

@@ -1,0 +1,3 @@
+import {canAdmin} from '@/lib/admin';
+import IntegrationControls from '@/components/IntegrationControls';
+export default async function Integrations(){if(!await canAdmin(['SUPERADMIN']))return <div className="page-wrap"><h1>Forbidden — superadmin only</h1></div>;return <div className="page-wrap"><p className="kicker dark">SECURITY / STAFF ONLY</p><h1 className="page-title">Integrations<span>.</span></h1><p className="page-lead">Store credential payloads encrypted in PostgreSQL; the master key must be a Railway variable. Saving a secret does not mean the provider connection is validated.</p><IntegrationControls/></div>}
