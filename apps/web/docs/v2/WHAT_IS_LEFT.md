@@ -25,3 +25,12 @@
 3. Complete studio stage machine persistence on JobRun.
 4. Physical sample + tech pack signoff before enabling `ENABLE_CHECKOUT` for any SKU.
 5. Google OAuth production redirect + Razorpay sandbox E2E on Railway.
+6. Replace AI-simulated Quiet Power photography with manufacturer sample photos.
+7. Shiprocket live adapter beyond fail-closed scaffold; invoice PDF after counsel/CA.
+8. Disable `DEMO_AUTH` before any real customer traffic.
+
+## Verified on Railway (2026-11-15)
+
+- Deploy SHA `a18d6c1` / deployment `cae1becd` SUCCESS
+- Quiet Power PDP: 6 labelled AI-simulated views + media checklist live
+- Health: `dbOk/redisOk`, `checkoutEnabled:false` → **NO-GO for live money**
