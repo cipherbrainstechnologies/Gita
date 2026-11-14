@@ -3,7 +3,7 @@ import {withTimeout} from "./config";
 
 export type ConceptMedia = {
   src: string;
-  view: "front" | "back" | "combined" | "detail" | "lifestyle";
+  view: "front" | "back" | "side" | "combined" | "detail" | "lifestyle" | "on-model" | "print-proof";
   alt: string;
   simulated: true;
 };
@@ -95,6 +95,12 @@ export const sampleConcepts: DemoProduct[] = [
         simulated: true,
       },
       {
+        src: "/images/quiet-power-editorial-side.jpg",
+        view: "side",
+        alt: "AI-simulated three-quarter side view of Quiet Power oversized tee on model",
+        simulated: true,
+      },
+      {
         src: "/images/quiet-power-editorial-detail.webp",
         view: "detail",
         alt: "AI-simulated detail close-up of Quiet Power chest print on charcoal cotton",
@@ -102,8 +108,14 @@ export const sampleConcepts: DemoProduct[] = [
       },
       {
         src: "/images/quiet-power-editorial-front-back.webp",
-        view: "combined",
-        alt: "AI-simulated combined Quiet Power concept photography",
+        view: "on-model",
+        alt: "AI-simulated on-model concept photography for Quiet Power",
+        simulated: true,
+      },
+      {
+        src: "/images/quiet-power-editorial-print-proof.jpg",
+        view: "print-proof",
+        alt: "AI-simulated flat print-placement proof for Quiet Power chest typography",
         simulated: true,
       },
     ],

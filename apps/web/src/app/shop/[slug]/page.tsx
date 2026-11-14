@@ -123,6 +123,19 @@ export default async function Product({params}: {params: Promise<{slug: string}>
                 "AI-generated simulated photography of an original design. It does not prove actual fit, fabric quality, print fidelity or supplier readiness."
               : "Print file, on-model photography and close-up product images are missing."}
           </p>
+          {hasMedia && p.media && (
+            <ul className="media-view-checklist">
+              {(["front", "back", "side", "detail", "on-model", "print-proof"] as const).map((v) => {
+                const hit = p.media!.some((m) => m.view === v || (v === "on-model" && m.view === "combined"));
+                return (
+                  <li key={v} data-present={hit ? "yes" : "no"}>
+                    {hit ? "✓" : "○"} {v.toUpperCase()}
+                    {hit ? " (AI simulation)" : " missing — manufacturer/photo gate"}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
 
         <div className="info-block">

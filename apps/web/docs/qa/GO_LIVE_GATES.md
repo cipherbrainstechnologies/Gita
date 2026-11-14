@@ -18,6 +18,12 @@ Do not treat a green `npm run build` as commercial readiness.
 
 ## V2 media gate note (2026-11-15)
 
-- [x] Quiet Power + Karma have multi-view simulated photography with disclosure watermark (not physical sample proof).
+- [x] Quiet Power has **6** labelled AI-simulated views (front/back/side/detail/on-model/print-proof) + PDP checklist.
+- [x] Karma has multi-view simulated photography with disclosure watermark (not physical sample proof).
 - [ ] Simulated images replaced by photographed physical samples for every sellable SKU.
 - [ ] Tech pack + sample sign-off recorded before PREORDER.
+
+## Staging vs production checkout
+
+- Staging/demo browsing: **allowed** with `checkoutEnabled:false` and DEMO_AUTH.
+- Real-money checkout: **NO-GO** until every unchecked gate above is closed.
