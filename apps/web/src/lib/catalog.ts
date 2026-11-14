@@ -211,6 +211,8 @@ export type CatalogProduct = {
   status: CatalogStatus;
   /** True ONLY when status === PREORDER and at least one variant is enabled. */
   orderable: boolean;
+  /** Unique storefront preview registered; waitlist/reservation UX — not live payment. */
+  displaySaleReady?: boolean;
   source: "db" | "sample";
   variants: CatalogVariant[];
   media?: ConceptMedia[];
@@ -311,6 +313,7 @@ export function fromDb(r: DbRow, media?: ConceptMedia[]): CatalogProduct {
     fit: r.variants[0]?.fit ?? ed?.fit ?? "",
     status: r.status,
     orderable,
+    displaySaleReady: r.displaySaleReady === true,
     source: "db",
     theme: r.theme ?? undefined,
     language: r.language ?? undefined,

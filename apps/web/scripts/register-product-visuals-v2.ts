@@ -1,26 +1,18 @@
 /**
  * Registers deterministic per-SKU typographic garment previews (not shared photographs).
  */
-import {createHash} from "node:crypto";
-import {buildDesignDna, visualApiPath} from "../src/lib/fashion/design-dna";
-import {contentSha256FromSvg, renderFlatMockupSvg} from "../src/lib/fashion/flat-mockup-svg";
+import {chunk, disconnectDb, installScriptDbShutdown, pause} from "../src/lib/db-lifecycle";
+import {registerSkuVisuals} from "../src/lib/fashion/register-sku-visual";
 import {prisma} from "../src/lib/db";
 
 const dryRun = process.argv.includes("--dry-run");
 const limitArg = process.argv.find((a) => a.startsWith("--limit="));
 const limit = limitArg ? Math.min(5000, Number(limitArg.split("=")[1]) || 1000) : 5000;
 const skipExisting = !process.argv.includes("--force");
+const batchArg = process.argv.find((a) => a.startsWith("--batch-size="));
+const batchSize = batchArg ? Math.min(100, Math.max(5, Number(batchArg.split("=")[1]) || 25)) : 25;
 
-type View = "front" | "back" | "detail";
-const GALLERY: {view: View; mediaRole: string}[] = [
-  {view: "front", mediaRole: "FRONT"},
-  {view: "back", mediaRole: "BACK"},
-  {view: "detail", mediaRole: "PRINT_CLOSEUP"},
-];
-
-function assetKey(slug: string, role: string, contentSha: string) {
-  return createHash("sha256").update(`${slug}:${role}:${contentSha}`, "utf8").digest("hex");
-}
+installScriptDbShutdown();
 
 async function main() {
   const products = await prisma.product.findMany({
@@ -37,117 +29,46 @@ async function main() {
       designBriefFingerprint: true,
       conceptMeta: true,
       palette: true,
+      displaySaleReady: true,
     },
   });
 
-  const contentHashes = new Map<string, string>();
+  const contentHashIndex = new Map<string, string>();
   let registered = 0;
   let skipped = 0;
   let duplicateWarnings = 0;
 
-  for (const p of products) {
-    if (!p.tagline || !p.designBriefFingerprint) {
-      skipped++;
-      continue;
-    }
-    const meta = p.conceptMeta as Record<string, unknown> | null;
-    const dna = buildDesignDna({
-      slug: p.slug,
-      designBriefFingerprint: p.designBriefFingerprint,
-      quoteFingerprint:
-        typeof meta?.quoteFingerprint === "string" ? meta.quoteFingerprint : p.designBriefFingerprint,
-      quoteText: p.tagline,
-      language: p.language,
-      garmentFamily: p.garmentFamily,
-      placement: typeof meta?.placement === "string" ? meta.placement : undefined,
-      motif: typeof meta?.motif === "string" ? meta.motif : undefined,
-      fit: typeof meta?.fit === "string" ? meta.fit : undefined,
-      palette: p.palette,
-    });
+  const pending = skipExisting ? products.filter((p) => !p.displaySaleReady) : products;
 
-    if (skipExisting) {
-      const hasStorefront = await prisma.productMediaV2.count({
-        where: {productId: p.id, storefrontVisible: true, visualKind: "TYPOGRAPHIC_FLAT"},
-      });
-      if (hasStorefront >= 2) {
+  for (const batch of chunk(pending, batchSize)) {
+    for (const p of batch) {
+      if (dryRun) {
+        registered++;
+        continue;
+      }
+      const res = await registerSkuVisuals(prisma, p, contentHashIndex);
+      if (!res) {
         skipped++;
         continue;
       }
+      if (res.duplicateOf) duplicateWarnings++;
+      registered++;
     }
-
-    const imagesJson: {src: string; view: string; alt: string; origin: string; approved: boolean; role: string}[] = [];
-
-    for (const g of GALLERY) {
-      const svg = renderFlatMockupSvg(dna, g.view);
-      const contentSha256 = contentSha256FromSvg(svg);
-      const dupSlug = contentHashes.get(contentSha256);
-      if (dupSlug && dupSlug !== p.slug) duplicateWarnings++;
-
-      contentHashes.set(contentSha256, p.slug);
-      const fileUrl = visualApiPath(p.slug, g.view);
-      const assetSha256 = assetKey(p.slug, g.mediaRole, contentSha256);
-
-      if (!dryRun) {
-        await prisma.productMediaV2.upsert({
-          where: {productId_mediaRole_assetSha256: {productId: p.id, mediaRole: g.mediaRole, assetSha256}},
-          create: {
-            productId: p.id,
-            mediaRole: g.mediaRole,
-            fileUrl,
-            origin: "TYPOGRAPHIC_PREVIEW",
-            assetSha256,
-            contentSha256,
-            visualKind: "TYPOGRAPHIC_FLAT",
-            storefrontVisible: true,
-            approvedForPublication: false,
-            reviewState: "PENDING",
-            duplicateOfProductId: dupSlug && dupSlug !== p.slug ? undefined : undefined,
-          },
-          update: {
-            fileUrl,
-            contentSha256,
-            visualKind: "TYPOGRAPHIC_FLAT",
-            storefrontVisible: true,
-            approvedForPublication: false,
-            reviewState: "PENDING",
-          },
-        });
-      }
-
-      imagesJson.push({
-        src: fileUrl,
-        view: g.view,
-        alt: `${p.slug} ${g.view} design preview — ${p.tagline.slice(0, 60)}`,
-        origin: "TYPOGRAPHIC_PREVIEW",
-        approved: false,
-        role: g.mediaRole,
-      });
-    }
-
-    if (!dryRun) {
-      await prisma.product.update({
-        where: {id: p.id},
-        data: {
-          conceptMeta: {...(meta ?? {}), designDna: dna, visualVersion: "typographic-flat-v1"},
-          images: imagesJson,
-          disclosure:
-            "Product-specific typographic garment preview generated from this SKU’s Design DNA. On-model photography requires separate human approval.",
-        },
-      });
-    }
-    registered++;
+    if (!dryRun) await pause(100);
   }
 
-  const distinctContent = contentHashes.size;
+  if (skipExisting) skipped += products.length - pending.length;
+
   console.log(
     JSON.stringify(
       {
         dryRun,
+        batchSize,
         processed: products.length,
         registered,
         skipped,
-        distinctContentHashes: distinctContent,
-        duplicateContentWarnings: duplicateWarnings,
+        distinctContentHashes: contentHashIndex.size,
+        duplicateWarnings,
       },
       null,
       2,
@@ -161,4 +82,4 @@ main()
     console.error(e);
     process.exitCode = 1;
   })
-  .finally(() => prisma.$disconnect());
+  .finally(() => disconnectDb());

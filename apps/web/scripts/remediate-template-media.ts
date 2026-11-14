@@ -1,7 +1,10 @@
 /**
  * Unapproves shared template photography incorrectly attached to concept SKUs.
  */
+import {disconnectDb, installScriptDbShutdown} from "../src/lib/db-lifecycle";
 import {prisma} from "../src/lib/db";
+
+installScriptDbShutdown();
 import {SHARED_TEMPLATE_URLS, isSharedTemplateUrl} from "../src/lib/fashion/template-urls";
 
 const dryRun = process.argv.includes("--dry-run");
@@ -57,4 +60,4 @@ main()
     console.error(e);
     process.exitCode = 1;
   })
-  .finally(() => prisma.$disconnect());
+  .finally(() => disconnectDb());

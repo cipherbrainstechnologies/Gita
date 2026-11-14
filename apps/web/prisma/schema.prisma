@@ -255,6 +255,8 @@ model Product {
   placement              String?
   artFamily              String?
   conceptMeta            Json?
+  /// Unique storefront visuals + variant rows present; does NOT enable payment (checkout gates still apply).
+  displaySaleReady       Boolean          @default(false)
   variants               ProductVariant[]
   publishedAt            DateTime?
   createdAt              DateTime         @default(now())

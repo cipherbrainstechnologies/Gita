@@ -26,6 +26,7 @@
     "db:remediate:template-media": "tsx scripts/remediate-template-media.ts",
     "db:register:product-visuals-v2": "tsx scripts/register-product-visuals-v2.ts",
     "audit:visual-diversity": "tsx scripts/audit-visual-diversity.ts",
+    "db:prepare:sale-display": "tsx scripts/prepare-catalog-sale-display.ts",
     "db:seed:demo": "tsx scripts/seed-demo.ts",
     "db:seed:v2-content": "tsx scripts/seed-v2-content.ts",
     "verify:v2": "python scripts/verify_v2.py",

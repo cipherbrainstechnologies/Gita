@@ -9,13 +9,15 @@ export function ProductCard({product}: {product: CatalogProduct}) {
     (cover as {origin?: string} | undefined)?.origin === "TYPOGRAPHIC_PREVIEW";
   const chip = product.orderable
     ? "PREORDER"
-    : product.status === "CONCEPT"
-      ? cover
-        ? isTypographic
-          ? "DESIGN PREVIEW"
-          : "MODEL PREVIEW"
-        : "CONCEPT"
-      : product.status.replace(/_/g, " ");
+    : product.displaySaleReady && cover
+      ? "RESERVE INTEREST"
+      : product.status === "CONCEPT"
+        ? cover
+          ? isTypographic
+            ? "DESIGN PREVIEW"
+            : "MODEL PREVIEW"
+          : "CONCEPT"
+        : product.status.replace(/_/g, " ");
 
   return (
     <Link href={`/shop/${product.slug}`} className="product-card">

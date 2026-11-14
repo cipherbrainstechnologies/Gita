@@ -1,6 +1,7 @@
 /**
  * Reports distinct file URLs and content hashes for concept catalogue media.
  */
+import {disconnectDb} from "../src/lib/db-lifecycle";
 import {prisma} from "../src/lib/db";
 import {isSharedTemplateUrl} from "../src/lib/fashion/template-urls";
 
@@ -74,4 +75,4 @@ main()
     console.error(e);
     process.exitCode = 1;
   })
-  .finally(() => prisma.$disconnect());
+  .finally(() => disconnectDb());
