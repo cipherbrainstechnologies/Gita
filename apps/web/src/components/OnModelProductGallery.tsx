@@ -26,6 +26,7 @@ export function OnModelProductGallery({images, productName, disclosure}: Props) 
           sizes="(max-width: 900px) 100vw, 55vw"
           priority
           className="editorial-photo"
+          unoptimized={current.src.includes("/api/catalog/on-model/")}
         />
         <span className="editorial-watermark">
           {isPhotoSample ? PHOTO_SAMPLE_WATERMARK : MODEL_PREVIEW_WATERMARK}
@@ -42,7 +43,13 @@ export function OnModelProductGallery({images, productName, disclosure}: Props) 
             aria-pressed={index === active}
             className={`editorial-thumb ${index === active ? "chosen" : ""}`}
           >
-            <Image src={asset.src} alt={asset.alt} fill sizes="120px" />
+            <Image
+              src={asset.src}
+              alt={asset.alt}
+              fill
+              sizes="120px"
+              unoptimized={asset.src.includes("/api/catalog/on-model/")}
+            />
             <span>{asset.view.toUpperCase()}</span>
           </button>
         ))}

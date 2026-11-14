@@ -27,6 +27,8 @@
     "db:register:product-visuals-v2": "tsx scripts/register-product-visuals-v2.ts",
     "audit:visual-diversity": "tsx scripts/audit-visual-diversity.ts",
     "db:prepare:sale-display": "tsx scripts/prepare-catalog-sale-display.ts",
+    "db:batch:on-model": "tsx scripts/batch-on-model-render.ts",
+    "audit:on-model-catalog": "tsx scripts/audit-on-model-catalog.ts",
     "db:seed:demo": "tsx scripts/seed-demo.ts",
     "db:seed:v2-content": "tsx scripts/seed-v2-content.ts",
     "verify:v2": "python scripts/verify_v2.py",
@@ -44,6 +46,7 @@
     "next-auth": "^5.0.0-beta.30",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "sharp": "^0.34.5",
     "zod": "^4.1.0"
   },
   "devDependencies": {

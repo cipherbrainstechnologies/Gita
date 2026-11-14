@@ -4,18 +4,18 @@ import type {CatalogProduct} from "@/lib/catalog";
 
 export function ProductCard({product}: {product: CatalogProduct}) {
   const cover = product.media?.find((m) => m.view === "front") ?? product.media?.[0];
-  const isTypographic =
-    cover?.src.includes("/api/catalog/visual/") ||
-    (cover as {origin?: string} | undefined)?.origin === "TYPOGRAPHIC_PREVIEW";
+  const isOnModelRaster =
+    cover?.src.includes("/api/catalog/on-model/") ||
+    (cover as {origin?: string} | undefined)?.origin === "ON_MODEL_RASTER";
   const chip = product.orderable
     ? "PREORDER"
     : product.displaySaleReady && cover
       ? "RESERVE INTEREST"
       : product.status === "CONCEPT"
         ? cover
-          ? isTypographic
-            ? "DESIGN PREVIEW"
-            : "MODEL PREVIEW"
+        ? isOnModelRaster
+          ? "ON-MODEL"
+          : "MODEL PREVIEW"
           : "CONCEPT"
         : product.status.replace(/_/g, " ");
 
@@ -30,7 +30,11 @@ export function ProductCard({product}: {product: CatalogProduct}) {
             fill
             sizes="(max-width: 700px) 50vw, 25vw"
             className="product-photo"
-            unoptimized={cover.src.endsWith(".svg") || cover.src.includes("/api/catalog/visual/")}
+            unoptimized={
+              cover.src.endsWith(".svg") ||
+              cover.src.includes("/api/catalog/visual/") ||
+              cover.src.includes("/api/catalog/on-model/")
+            }
           />
         ) : (
           <div className="photo-pending">
