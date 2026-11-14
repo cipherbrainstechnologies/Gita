@@ -29,3 +29,23 @@
 - Affected Modules: Frontend architecture guidance
 - Reversal Conditions: Explicit migration PR approved by product owner.
 - Status: Active
+
+### Decision #004 – Railway web+worker share image; route via RAILWAY_SERVICE_NAME
+
+- Date: 2026-11-15
+- Author: SRE / Agent
+- Summary: Both Railway services deploy from `apps/web` with start `node scripts/railway-entry.mjs`. Entry detects `worker` in `RAILWAY_SERVICE_NAME` and runs BullMQ; otherwise migrate + Next start.
+- Reason: Nixpacks/Procfile + shared CaC otherwise launched Next on the worker.
+- Affected Modules: `apps/web/scripts/railway-entry.mjs`, `railway.toml`, Dockerfile, Procfile
+- Reversal Conditions: Separate Docker images per process with independent start commands.
+- Status: Active
+
+### Decision #005 – Vendor GPU repos are adapters, not Railway services
+
+- Date: 2026-11-15
+- Author: Architecture
+- Summary: `vendor/diffusers` and `vendor/fashn-vton-1.5` are consumed only by `services/gpu-inference` HTTP adapters. Commerce worker calls them over HTTPS when configured; otherwise labelled sandbox simulations.
+- Reason: GPU cost/licensing; Railway CPU containers must not pretend to render production art.
+- Affected Modules: providers, gpu-inference, worker
+- Reversal Conditions: Managed GPU product on Railway with verified CUDA capacity.
+- Status: Active

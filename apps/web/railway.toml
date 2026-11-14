@@ -7,9 +7,8 @@
 builder = "NIXPACKS"
 buildCommand = "npm ci && npx prisma generate && npm run build"
 
+# One start command for both services — scripts/railway-entry.mjs routes by RAILWAY_SERVICE_NAME.
 [deploy]
-startCommand = "npx prisma migrate deploy && npm run start"
-healthcheckPath = "/api/health"
-healthcheckTimeout = 120
+startCommand = "node scripts/railway-entry.mjs"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 5

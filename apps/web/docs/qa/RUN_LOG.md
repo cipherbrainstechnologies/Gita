@@ -16,4 +16,21 @@ Commands actually run and results:
 - `npm run build`: PASS (`next/font/google` fetched fonts online; lint errors in `Header.tsx`/`page.tsx` fixed).
 - Smoke test via `next start` with no `DATABASE_URL` and an unreachable `REDIS_URL`: `GET /api/health` 200 `status:degraded, dbOk:false, redisOk:false, stage:preview`; `GET /api/products` 200 `source:sample, orderable:false`; `POST /api/checkout` waitlist 503 `WAITLIST_UNAVAILABLE` (nothing saved), unknown product 404, bad email 422; pages `/`, `/shop`, `/shop/less-proving`, `/checkout` 200, unknown slug 404.
 
-NOT run: `npm run db:seed:catalog` against a DB, waitlist 202 against a DB, the `ENABLE_CHECKOUT=true` order path, Razorpay sandbox, Docker build, Railway deploy, browser/accessibility checks.
+NOT run (local): `npm run db:seed:catalog` against a DB, waitlist 202 against a DB, the `ENABLE_CHECKOUT=true` order path, Razorpay sandbox, Docker build, browser/accessibility checks.
+
+## 2026-11-15 - Railway production smoke (project `verse-mode`)
+
+Project: https://railway.com/project/911b8d56-a3cd-49af-b0e3-7283d61b4bd8  
+Public: https://web-production-b2b81db7.up.railway.app
+
+Evidence:
+- Services SUCCESS: `web`, `worker`, `Postgres`, `Redis`.
+- `npx prisma migrate deploy` applied `20251115000000_init` on Railway Postgres (web start logs).
+- Worker logs: `[railway-entry] service=worker mode=worker` then `Verse Mode draft-assembly worker ready`.
+- `GET /api/health` → `status:ok, dbOk:true, redisOk:true, checkoutEnabled:false, stage:preview`.
+- `GET /`, `/shop` → 200.
+- `railway ssh --service web -- npm run db:seed:catalog` → 6 CONCEPT products upserted (variants disabled).
+- `GET /api/products` → `source:db, orderable:false`.
+- `POST /api/checkout` waitlist → **202** WAITLISTED (no payment).
+
+Still BLOCKED for revenue: Google OAuth credentials, Razorpay merchant + webhook secret, legal seller/GSTIN, approved policy versions, supplier sign-off, GPU host URLs for diffusers/FASHN.
