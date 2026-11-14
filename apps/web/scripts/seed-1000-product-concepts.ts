@@ -5,6 +5,7 @@
 import {readFileSync} from "node:fs";
 import {resolve} from "node:path";
 import type {ProductStatus} from "@prisma/client";
+import {disconnectDb} from "../src/lib/db-lifecycle";
 import {prisma} from "../src/lib/db";
 
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
@@ -79,6 +80,7 @@ async function main() {
       quoteFingerprint: b.quote_fingerprint,
       designBriefFingerprint: b.fingerprint,
       conceptMeta: {
+        quoteFingerprint: b.quote_fingerprint,
         briefId: b.id,
         motif: b.motif,
         fit: b.fit,
@@ -157,4 +159,4 @@ main()
     console.error(e);
     process.exitCode = 1;
   })
-  .finally(() => prisma.$disconnect());
+  .finally(() => disconnectDb());

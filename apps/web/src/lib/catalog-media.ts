@@ -1,5 +1,6 @@
 import type {ConceptMedia} from "./catalog";
 import {prisma} from "./db";
+import {isSharedTemplateUrl} from "./fashion/template-urls";
 
 export type ResolvedMedia = ConceptMedia & {
   origin?: string;
@@ -44,20 +45,25 @@ export async function loadProductMedia(productId: string, slug: string): Promise
   try {
     const [rows, product] = await Promise.all([
       prisma.productMediaV2.findMany({
-        where: {productId, approvedForPublication: true},
+        where: {
+          productId,
+          OR: [{approvedForPublication: true}, {storefrontVisible: true}],
+        },
         orderBy: [{mediaRole: "asc"}, {createdAt: "asc"}],
       }),
       prisma.product.findUnique({where: {id: productId}, select: {images: true}}),
     ]);
-    const fromTable: ResolvedMedia[] = rows.map((m) => ({
-      src: m.fileUrl,
-      view: roleToView[m.mediaRole] ?? "on-model",
-      alt: `${slug} ${m.mediaRole.toLowerCase().replace("_", " ")} view`,
-      simulated: (m.origin !== "PHOTOGRAPHED_SAMPLE") as true,
-      origin: m.origin,
-      approved: m.approvedForPublication,
-      role: m.mediaRole,
-    }));
+    const fromTable: ResolvedMedia[] = rows
+      .filter((m) => !isSharedTemplateUrl(m.fileUrl) || m.approvedForPublication)
+      .map((m) => ({
+        src: m.fileUrl,
+        view: roleToView[m.mediaRole] ?? "on-model",
+        alt: `${slug} ${m.mediaRole.toLowerCase().replace("_", " ")} view`,
+        simulated: (m.origin !== "PHOTOGRAPHED_SAMPLE") as true,
+        origin: m.origin,
+        approved: m.approvedForPublication,
+        role: m.mediaRole,
+      }));
     const fromJson = normalizeImagesJson(product?.images);
     const seen = new Set<string>();
     return [...fromTable, ...fromJson].filter((m) => {
@@ -73,7 +79,34 @@ export async function loadProductMedia(productId: string, slug: string): Promise
 
 export function hasApprovedPair(media: ResolvedMedia[]): {front: boolean; back: boolean} {
   return {
-    front: media.some((m) => m.view === "front" && m.approved !== false),
-    back: media.some((m) => m.view === "back" && m.approved !== false),
+    front: media.some((m) => m.view === "front" && m.approved === true),
+    back: media.some((m) => m.view === "back" && m.approved === true),
   };
+}
+
+/** Batch-load storefront-visible media for catalog pages (avoids N+1). */
+export async function loadStorefrontMediaForProducts(
+  productIds: string[],
+): Promise<Map<string, ConceptMedia[]>> {
+  if (!productIds.length) return new Map();
+  const rows = await prisma.productMediaV2.findMany({
+    where: {
+      productId: {in: productIds},
+      OR: [{storefrontVisible: true}, {approvedForPublication: true}],
+    },
+    orderBy: [{productId: "asc"}, {mediaRole: "asc"}],
+  });
+  const out = new Map<string, ConceptMedia[]>();
+  for (const m of rows) {
+    if (isSharedTemplateUrl(m.fileUrl) && !m.approvedForPublication) continue;
+    const list = out.get(m.productId) ?? [];
+    list.push({
+      src: m.fileUrl,
+      view: roleToView[m.mediaRole] ?? "on-model",
+      alt: `${m.mediaRole} preview`,
+      simulated: true,
+    });
+    out.set(m.productId, list);
+  }
+  return out;
 }

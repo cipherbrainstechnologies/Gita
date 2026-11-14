@@ -1,103 +1,78 @@
 /**
- * Attaches generated on-model front/back previews to concept SKUs (vmb-*).
- * Uses licensed template photography paths already in the repo; each SKU gets deterministic garment-appropriate views.
- * Does not enable checkout. Idempotent via ProductMediaV2 unique (productId, mediaRole, assetSha256).
+ * @deprecated Shared template attach caused duplicate imagery across 1,000 SKUs.
+ * Use: db:remediate:template-media + db:register:product-visuals-v2 (+ GPU queue for on-model).
  */
-import {createHash} from "node:crypto";
 import {prisma} from "../src/lib/db";
-import {mediaAlt} from "../src/lib/storefront-copy";
 
-const TEES = {
-  front: "/images/quiet-power-editorial-front.webp",
-  back: "/images/quiet-power-editorial-back.webp",
-  detail: "/images/quiet-power-editorial-detail.webp",
-};
-const PANTS = {
-  front: "/images/quiet-power-editorial-side.jpg",
-  back: "/images/karma-editorial-back.webp",
-  detail: "/images/quiet-power-editorial-detail.webp",
-};
-
+const legacy = process.argv.includes("--legacy-simulation-only");
 const dryRun = process.argv.includes("--dry-run");
-const limitArg = process.argv.find((a) => a.startsWith("--limit="));
-const limit = limitArg ? Math.min(5000, Number(limitArg.split("=")[1]) || 1000) : 1000;
-
-function sha(url: string) {
-  return createHash("sha256").update(url).digest("hex");
-}
 
 async function main() {
+  if (!legacy) {
+    console.error(
+      JSON.stringify(
+        {
+          error: "BLOCKED",
+          message:
+            "attach-concept-model-gallery was disabled — it reused the same editorial photos for every SKU. Run npm run db:remediate:template-media then npm run db:register:product-visuals-v2 instead.",
+          hint: "Pass --legacy-simulation-only only in isolated test environments.",
+        },
+        null,
+        2,
+      ),
+    );
+    process.exitCode = 1;
+    return;
+  }
+
+  console.warn("LEGACY MODE: still attaches shared templates — not for production.");
+  const {createHash} = await import("node:crypto");
+  const TEES = {
+    front: "/images/quiet-power-editorial-front.webp",
+    back: "/images/quiet-power-editorial-back.webp",
+    detail: "/images/quiet-power-editorial-detail.webp",
+  };
+  const PANTS = {
+    front: "/images/quiet-power-editorial-side.jpg",
+    back: "/images/karma-editorial-back.webp",
+    detail: "/images/quiet-power-editorial-detail.webp",
+  };
+  const limitArg = process.argv.find((a) => a.startsWith("--limit="));
+  const limit = limitArg ? Math.min(100, Number(limitArg.split("=")[1]) || 10) : 10;
   const products = await prisma.product.findMany({
     where: {designBriefFingerprint: {not: null}},
-    orderBy: {slug: "asc"},
     take: limit,
-    select: {id: true, slug: true, tagline: true, garmentFamily: true, category: true, images: true},
+    select: {id: true, slug: true, garmentFamily: true, category: true},
   });
-
   let attached = 0;
-  let skipped = 0;
   for (const p of products) {
-    const tpl = (p.garmentFamily === "PANTS" || p.category === "pants") ? PANTS : TEES;
-    const line = p.tagline ?? p.slug;
-    const gallery = [
-      {mediaRole: "FRONT", fileUrl: tpl.front, view: "front"},
-      {mediaRole: "BACK", fileUrl: tpl.back, view: "back"},
-      {mediaRole: "PRINT_CLOSEUP", fileUrl: tpl.detail, view: "detail"},
-    ] as const;
-
-    const existing = await prisma.productMediaV2.count({
-      where: {productId: p.id, mediaRole: {in: ["FRONT", "BACK"]}, approvedForPublication: true},
-    });
-    if (existing >= 2) {
-      skipped++;
-      continue;
-    }
-
+    const tpl = p.garmentFamily === "PANTS" || p.category === "pants" ? PANTS : TEES;
     if (!dryRun) {
-      for (const g of gallery) {
-        const assetSha256 = sha(`${p.slug}:${g.mediaRole}:${g.fileUrl}`);
+      for (const [role, url] of [
+        ["FRONT", tpl.front],
+        ["BACK", tpl.back],
+      ] as const) {
+        const assetSha256 = createHash("sha256").update(`${p.slug}:${role}:${url}`).digest("hex");
         await prisma.productMediaV2.upsert({
-          where: {productId_mediaRole_assetSha256: {productId: p.id, mediaRole: g.mediaRole, assetSha256}},
+          where: {productId_mediaRole_assetSha256: {productId: p.id, mediaRole: role, assetSha256}},
           create: {
             productId: p.id,
-            mediaRole: g.mediaRole,
-            fileUrl: g.fileUrl,
-            origin: "GENERATED_ON_MODEL",
+            mediaRole: role,
+            fileUrl: url,
+            origin: "LEGACY_TEMPLATE_ATTACH",
             assetSha256,
-            approvedForPublication: true,
+            approvedForPublication: false,
+            storefrontVisible: false,
+            visualKind: "SHARED_TEMPLATE",
+            reviewState: "REJECTED",
           },
           update: {},
         });
       }
-      const imagesJson = gallery.map((g) => ({
-        src: g.fileUrl,
-        view: g.view,
-        alt: mediaAlt(p.garmentFamily ?? "TEES", g.view, line),
-        origin: "GENERATED_ON_MODEL",
-        approved: true,
-        role: g.mediaRole,
-      }));
-      await prisma.product.update({
-        where: {id: p.id},
-        data: {
-          images: imagesJson,
-          disclosure:
-            "Generated on-model product imagery for fit and print placement preview. Not a photographed factory sample.",
-        },
-      });
     }
     attached++;
   }
-
-  const conceptIds = products.map((p) => p.id);
-  const [withFront, withBack] = await Promise.all([
-    prisma.productMediaV2.count({where: {mediaRole: "FRONT", approvedForPublication: true, productId: {in: conceptIds}}}),
-    prisma.productMediaV2.count({where: {mediaRole: "BACK", approvedForPublication: true, productId: {in: conceptIds}}}),
-  ]);
-
-  console.log(
-    JSON.stringify({dryRun, processed: products.length, attached, skippedAlreadyHadPair: skipped, modelFront: withFront, modelBack: withBack}, null, 2),
-  );
+  console.log(JSON.stringify({legacy: true, dryRun, attached, note: "approvedForPublication is never set in legacy mode"}, null, 2));
 }
 
 main()

@@ -255,6 +255,8 @@ model Product {
   placement              String?
   artFamily              String?
   conceptMeta            Json?
+  /// Unique storefront visuals + variant rows present; does NOT enable payment (checkout gates still apply).
+  displaySaleReady       Boolean          @default(false)
   variants               ProductVariant[]
   publishedAt            DateTime?
   createdAt              DateTime         @default(now())
@@ -773,9 +775,16 @@ model ProductMediaV2 {
   visualReviewedAt       DateTime?
   verifiedAgainstSample  Boolean  @default(false)
   approvedForPublication Boolean  @default(false)
+  visualKind             String?
+  contentSha256          String?
+  storefrontVisible      Boolean  @default(false)
+  reviewState            String   @default("PENDING")
+  duplicateOfProductId   String?
   createdAt              DateTime @default(now())
   @@unique([productId,mediaRole,assetSha256])
   @@index([productId,approvedForPublication])
+  @@index([productId,storefrontVisible])
+  @@index([contentSha256])
 }
 
 model ContentApprovalAudit {

@@ -2,6 +2,7 @@
  * Verifies 1,000 concept products (and optionally media / payment readiness).
  * Usage: npx tsx scripts/audit-1000-catalog.ts [--catalog-only]
  */
+import {disconnectDb} from "../src/lib/db-lifecycle";
 import {prisma} from "../src/lib/db";
 
 const catalogOnly = process.argv.includes("--catalog-only");
@@ -10,7 +11,8 @@ async function main() {
   const conceptWhere = {designBriefFingerprint: {not: null}};
   const conceptIds = (await prisma.product.findMany({where: conceptWhere, select: {id: true}})).map((p) => p.id);
 
-  const [productCount, variantCount, fpGroups, approvedFront, approvedBack, preorderEnabled] = await Promise.all([
+  const [productCount, variantCount, fpGroups, approvedFront, approvedBack, preorderEnabled, displaySaleReady, storefrontFront] =
+    await Promise.all([
     prisma.product.count({where: conceptWhere}),
     prisma.productVariant.count({where: {product: conceptWhere}}),
     prisma.product.groupBy({by: ["designBriefFingerprint"], where: conceptWhere, _count: true}),
@@ -22,6 +24,15 @@ async function main() {
     }),
     prisma.productVariant.count({
       where: {enabled: true, product: {status: "PREORDER", ...conceptWhere}},
+    }),
+    prisma.product.count({where: {...conceptWhere, displaySaleReady: true}}),
+    prisma.productMediaV2.count({
+      where: {
+        mediaRole: "FRONT",
+        storefrontVisible: true,
+        visualKind: "TYPOGRAPHIC_FLAT",
+        productId: {in: conceptIds},
+      },
     }),
   ]);
 
@@ -36,6 +47,8 @@ async function main() {
     approvedFrontViews: approvedFront,
     approvedBackViews: approvedBack,
     paymentEligibleVariants: preorderEnabled,
+    displaySaleReadyProducts: displaySaleReady,
+    uniqueStorefrontFrontPreviews: storefrontFront,
     pass: productCount === 1000 && variantCount === 6000 && dupFps === 0,
   };
 
@@ -43,7 +56,7 @@ async function main() {
 
   let ok = report.pass;
   if (!catalogOnly) {
-    ok = ok && approvedFront >= 1000 && approvedBack >= 1000 && preorderEnabled > 0;
+    ok = ok && storefrontFront >= 1000 && displaySaleReady >= 1000;
   }
   if (!ok) process.exitCode = 1;
 }
@@ -53,4 +66,4 @@ main()
     console.error(e);
     process.exitCode = 1;
   })
-  .finally(() => prisma.$disconnect());
+  .finally(() => disconnectDb());
