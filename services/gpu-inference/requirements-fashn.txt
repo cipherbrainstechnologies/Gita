@@ -1,0 +1,6 @@
+# HTTP wrapper only (sandbox mode needs nothing else).
+# For real inference also run: pip install -e .   (installs torch, fashn-human-parser, ...)
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.5
+pillow>=10.1

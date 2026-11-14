@@ -1,0 +1,6 @@
+[submodule "vendor/diffusers"]
+	path = vendor/diffusers
+	url = https://github.com/huggingface/diffusers.git
+[submodule "vendor/fashn-vton-1.5"]
+	path = vendor/fashn-vton-1.5
+	url = https://github.com/fashn-AI/fashn-vton-1.5.git

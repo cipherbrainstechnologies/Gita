@@ -1,0 +1,616 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum StaffRole {
+  SUPERADMIN
+  MERCHANDISER
+  OPERATIONS
+  SUPPORT
+  FINANCE
+  DESIGNER
+  FRANCHISE_MANAGER
+}
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+  NEEDS_CONFIGURATION
+}
+
+enum DesignState {
+  DRAFT
+  NEEDS_HUMAN_REVIEW
+  ORIGINALITY_REVIEW
+  PROOF_PENDING
+  APPROVED
+  REJECTED
+  ARCHIVED
+}
+
+enum ProductStatus {
+  CONCEPT
+  SAMPLE_PENDING
+  SAMPLE_APPROVED
+  PREORDER
+  CLOSED
+  ARCHIVED
+}
+
+enum OrderStatus {
+  DRAFT
+  PAYMENT_PENDING
+  PAID
+  VENDOR_CONFIRMED
+  IN_PRODUCTION
+  QUALITY_CONTROL
+  READY_TO_DISPATCH
+  SHIPPED
+  DELIVERED
+  CANCEL_REQUESTED
+  CANCELLED
+  REFUND_PENDING
+  REFUNDED
+  EXCEPTION
+}
+
+enum PaymentStatus {
+  CREATED
+  PENDING
+  AUTHORISED
+  CAPTURED
+  FAILED
+  PARTIALLY_REFUNDED
+  REFUNDED
+}
+
+enum PromotionKind {
+  SEASONAL
+  CATEGORY
+  LAUNCH
+  PARTNER
+  BIRTHDAY
+  MANUAL
+}
+
+model AdminUser {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  role      StaffRole
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Customer {
+  id                   String    @id @default(cuid())
+  googleSubject        String?   @unique
+  email                String?   @unique
+  displayName          String?
+  phoneEncrypted       String?
+  dateOfBirthEncrypted String?
+  over18ConfirmedAt    DateTime?
+  deletedAt            DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+
+model CustomerConsent {
+  id            String    @id @default(cuid())
+  customerId    String
+  purpose       String
+  policyVersion String
+  consented     Boolean
+  recordedAt    DateTime  @default(now())
+  evidence      Json?
+  revokedAt     DateTime?
+
+  @@index([customerId, purpose])
+}
+
+model QuoteDraft {
+  id              String   @id @default(cuid())
+  fingerprint     String   @unique
+  text            String   @db.Text
+  language        String
+  theme           String
+  originType      String
+  sourceCitation  String?
+  editorialStatus String   @default("DRAFT")
+  reviewerId      String?
+  createdAt       DateTime @default(now())
+
+  @@index([language, theme])
+}
+
+model DesignBrief {
+  id               String   @id @default(cuid())
+  fingerprint      String   @unique
+  quoteFingerprint String
+  quoteText        String   @db.Text
+  theme            String
+  garmentFamily    String
+  artFamily        String
+  placement        String
+  motif            String
+  palette          String
+  fit              String
+  state            String   @default("DRAFT")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([state, theme])
+}
+
+model DesignCandidate {
+  id             String      @id @default(cuid())
+  fingerprint    String      @unique
+  designBriefId  String?
+  quoteText      String      @db.Text
+  theme          String
+  garmentFamily  String
+  artFamily      String
+  state          DesignState @default(DRAFT)
+  semanticReview Json?
+  similarityFlag Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([state])
+}
+
+model DesignVersion {
+  id              String   @id @default(cuid())
+  candidateId     String
+  revision        Int
+  promptVersion   String?
+  modelName       String?
+  modelLicense    String?
+  outputLicense   String?
+  quoteSource     String?
+  approvalStatus  String   @default("DRAFT")
+  approverId      String?
+  assetHash       String?
+  artworkAssetId  String?
+  previewAssetId  String?
+  techPack        Json?
+  supplierProofId String?
+  generatedAt     DateTime @default(now())
+
+  @@unique([candidateId, revision])
+}
+
+model MediaAsset {
+  id           String   @id @default(cuid())
+  storageKey   String   @unique
+  sha256       String
+  mimeType     String
+  bytes        Int
+  assetType    String
+  provenance   Json?
+  isSimulation Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([sha256])
+}
+
+model Product {
+  id                String           @id @default(cuid())
+  slug              String           @unique
+  title             String
+  description       String?          @db.Text
+  collection        String?
+  tagline           String?
+  palette           String?
+  category          String
+  audienceFit       String
+  designVersionId   String?
+  supplierId        String?
+  status            ProductStatus    @default(CONCEPT)
+  images            Json?
+  fabricComposition String?
+  gsm               Int?
+  countryOfOrigin   String?
+  hsnCode           String?
+  disclosure        String?
+  sampleApprovedAt  DateTime?
+  approvedBy        String?
+  variants          ProductVariant[]
+  publishedAt       DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([status, category])
+}
+
+model ProductVariant {
+  id                  String   @id @default(cuid())
+  productId           String
+  product             Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  sku                 String   @unique
+  size                String
+  colour              String
+  fit                 String
+  garmentMeasurements Json?
+  mrpPaise            BigInt
+  pricePaise          BigInt
+  costPaise           BigInt?
+  taxRateBasisPoints  Int?
+  currency            String   @default("INR")
+  enabled             Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([productId])
+}
+
+model PriceHistory {
+  id            String    @id @default(cuid())
+  variantId     String
+  sellPaise     BigInt
+  previousPaise BigInt?
+  startAt       DateTime
+  endAt         DateTime?
+  actorId       String?
+
+  @@index([variantId, startAt])
+}
+
+model Supplier {
+  id           String   @id @default(cuid())
+  legalName    String
+  agreementRef String?
+  verified     Boolean  @default(false)
+  address      Json?
+  qualityTerms Json?
+  leadTimeDays Int?
+  active       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+}
+
+model PreorderCapacity {
+  id             String   @id @default(cuid())
+  variantId      String
+  supplierId     String
+  capacity       Int
+  reserved       Int      @default(0)
+  confirmed      Boolean  @default(false)
+  shipWindowFrom DateTime
+  shipWindowTo   DateTime
+  updatedAt      DateTime @updatedAt
+
+  @@unique([variantId, supplierId])
+}
+
+model Order {
+  id                  String      @id @default(cuid())
+  publicId            String      @unique
+  customerId          String
+  status              OrderStatus @default(DRAFT)
+  version             Int         @default(1)
+  currency            String      @default("INR")
+  subtotalPaise       BigInt
+  discountPaise       BigInt      @default(0)
+  shippingPaise       BigInt      @default(0)
+  taxPaise            BigInt
+  totalPaise          BigInt
+  addressEncrypted    String      @db.Text
+  legalSellerSnapshot Json
+  shippingPromise     Json
+  acceptedPolicy      Json
+  auditTrace          Json?
+  paidAt              DateTime?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  @@index([customerId, createdAt])
+  @@index([status, createdAt])
+}
+
+model OrderLine {
+  id            String @id @default(cuid())
+  orderId       String
+  productId     String
+  variantId     String
+  skuSnapshot   String
+  description   String
+  quantity      Int
+  unitPaise     BigInt
+  taxPaise      BigInt
+  discountPaise BigInt
+  attributes    Json
+
+  @@index([orderId])
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  orderId           String
+  provider          String
+  providerOrderId   String?       @unique
+  providerPaymentId String?       @unique
+  status            PaymentStatus @default(CREATED)
+  amountPaise       BigInt
+  currency          String        @default("INR")
+  capturedAt        DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([orderId, status])
+}
+
+model PaymentEvent {
+  id              String    @id @default(cuid())
+  provider        String
+  providerEventId String
+  payloadSha256   String
+  orderId         String?
+  type            String
+  receivedAt      DateTime  @default(now())
+  processedAt     DateTime?
+  result          String?
+
+  @@unique([provider, providerEventId])
+}
+
+model Refund {
+  id               String    @id @default(cuid())
+  orderId          String
+  paymentId        String
+  amountPaise      BigInt
+  providerRefundId String?   @unique
+  reason           String
+  status           String
+  decisionBy       String?
+  secondApprovalBy String?
+  initiatedAt      DateTime  @default(now())
+  completedAt      DateTime?
+}
+
+model Shipment {
+  id                 String    @id @default(cuid())
+  orderId            String
+  courier            String?
+  provider           String
+  shipmentProviderId String?   @unique
+  awb                String?   @unique
+  status             String
+  trackingEvents     Json?
+  bookedAt           DateTime?
+  deliveredAt        DateTime?
+}
+
+model ManufacturingBatch {
+  id             String    @id @default(cuid())
+  supplierId     String
+  status         String
+  orderLineIds   Json
+  quantity       Int
+  confirmedAt    DateTime?
+  estimatedReady DateTime?
+  actualReady    DateTime?
+  proofAssetId   String?
+  defectsCount   Int       @default(0)
+  createdAt      DateTime  @default(now())
+}
+
+model Promotion {
+  id                     String        @id @default(cuid())
+  code                   String        @unique
+  kind                   PromotionKind
+  label                  String
+  startsAt               DateTime
+  endsAt                 DateTime
+  eligibility            Json
+  discountRule           Json
+  exclusive              Boolean       @default(false)
+  maxRedemptions         Int?
+  maxPerCustomer         Int?
+  minOrderPaise          BigInt?
+  marginFloorBasisPoints Int?
+  active                 Boolean       @default(false)
+  createdAt              DateTime      @default(now())
+}
+
+model PromotionRedemption {
+  id          String   @id @default(cuid())
+  promotionId String
+  orderId     String
+  customerId  String
+  amountPaise BigInt
+  createdAt   DateTime @default(now())
+
+  @@unique([promotionId, orderId])
+}
+
+model PhysicalStock {
+  id        String @id @default(cuid())
+  storeId   String
+  variantId String
+  onHand    Int    @default(0)
+  reserved  Int    @default(0)
+  version   Int    @default(1)
+
+  @@unique([storeId, variantId])
+}
+
+model StockLedger {
+  id          String   @id @default(cuid())
+  storeId     String
+  variantId   String
+  quantity    Int
+  eventType   String
+  referenceId String
+  actorId     String
+  occurredAt  DateTime @default(now())
+
+  @@unique([storeId, eventType, referenceId, variantId])
+}
+
+model Store {
+  id         String   @id @default(cuid())
+  slug       String   @unique
+  name       String
+  storeType  String
+  legalOwner String
+  address    Json
+  gstin      String?
+  active     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model FranchiseAgreement {
+  id               String    @id @default(cuid())
+  storeId          String
+  partnerLegalName String
+  effectiveFrom    DateTime
+  effectiveTo      DateTime?
+  status           String
+  agreementAssetId String?
+  commissionRule   Json
+  createdAt        DateTime  @default(now())
+}
+
+model POSOrder {
+  id              String   @id @default(cuid())
+  storeId         String
+  receiptNo       String   @unique
+  idempotencyKey  String   @unique
+  cashierId       String
+  saleLines       Json
+  tenderSnapshots Json
+  totalPaise      BigInt
+  taxPaise        BigInt
+  status          String
+  createdAt       DateTime @default(now())
+}
+
+model NotificationOutbox {
+  id             String    @id @default(cuid())
+  recipientId    String
+  orderId        String?
+  eventType      String
+  channel        String
+  templateId     String
+  consentPurpose String?
+  status         String    @default("QUEUED")
+  attempts       Int       @default(0)
+  scheduledAt    DateTime  @default(now())
+  sentAt         DateTime?
+  lastError      String?
+  idempotencyKey String    @unique
+}
+
+model IntegrationSetting {
+  id               String    @id @default(cuid())
+  provider         String    @unique
+  mode             String    @default("SANDBOX")
+  maskedSuffix     String?
+  encryptedPayload String    @db.Text
+  nonce            String
+  authTag          String
+  keyVersion       Int
+  lastTestStatus   String?
+  lastTestAt       DateTime?
+  updatedAt        DateTime  @updatedAt
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actor       String
+  action      String
+  target      String
+  details     Json?
+  correlation String?
+  createdAt   DateTime @default(now())
+
+  @@index([target, createdAt])
+}
+
+model JobRun {
+  id             String    @id @default(cuid())
+  idempotencyKey String    @unique
+  kind           String
+  status         JobStatus @default(QUEUED)
+  payload        Json
+  total          Int       @default(0)
+  processed      Int       @default(0)
+  error          String?
+  createdAt      DateTime  @default(now())
+  completedAt    DateTime?
+}
+
+model PolicyVersion {
+  id          String    @id @default(cuid())
+  policyType  String
+  version     String
+  contentSha  String
+  content     String    @db.Text
+  status      String
+  approvedBy  String?
+  effectiveAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([policyType, version])
+}
+
+model SupportCase {
+  id             String    @id @default(cuid())
+  publicId       String    @unique
+  orderId        String?
+  customerId     String
+  category       String
+  priority       String
+  status         String
+  assignedTo     String?
+  complaintAt    DateTime  @default(now())
+  acknowledgedAt DateTime?
+  resolvedAt     DateTime?
+}
+
+model TaxRule {
+  id                    String    @id @default(cuid())
+  hsn                   String
+  productDescriptor     String
+  taxRateBasisPoints    Int
+  salePriceCeilingPaise BigInt?
+  effectiveFrom         DateTime
+  effectiveTo           DateTime?
+  approvedBy            String?
+
+  @@index([hsn, effectiveFrom])
+}
+
+model ExternalIdempotency {
+  id          String    @id @default(cuid())
+  operation   String
+  externalKey String
+  result      Json?
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime?
+
+  @@unique([operation, externalKey])
+}
+
+/// Pre-launch demand capture for CONCEPT products. Not an order, not a reservation, not stock.
+model WaitlistLead {
+  id          String   @id @default(cuid())
+  email       String
+  productSlug String
+  size        String
+  source      String   @default("web")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([email, productSlug])
+  @@index([productSlug, createdAt])
+}

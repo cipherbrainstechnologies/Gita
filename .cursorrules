@@ -1,0 +1,32 @@
+# Gita / VERSE//MODE — Project Intelligence
+
+## Overview
+`Gita` is the product monorepo. Cursor agents must treat this root as the workspace — not a nested kit folder as the deploy root.
+
+## Required reads (every task)
+1. `memory-bank/architecture.md`
+2. `memory-bank/folder-structure.md`
+3. `memory-bank/decisions.md`
+4. For commerce work: `apps/web/START_HERE_CURSOR.md` and `apps/web/docs/**` as needed
+
+## Layout (do not flatten)
+- `apps/web` — Railway-deployable Next.js commerce + worker
+- `services/gpu-inference` — GPU HTTP API (wraps vendors)
+- `vendor/diffusers`, `vendor/fashn-vton-1.5` — upstream submodules only
+- `kits/verse-mode-cursor` — non-deploy Cursor kit pointer
+- `memory-bank/` — living decisions and conventions
+- `infra/railway/` — deploy wiring
+
+## Hard rules
+- Never set Railway rootDirectory to `kits/` or `vendor/`.
+- Never run heavy GPU inference inside the Next.js Railway web container.
+- Never import `vendor/*` from Node `apps/web` — call the GPU service over HTTP.
+- Preserve feature-first / layered patterns inside `apps/web` (controller → service → repository for new modules).
+- Update `memory-bank/` when making cross-cutting structural decisions.
+
+## Stack lock
+Next.js 15 + React 19 + Prisma/Postgres + Auth.js + BullMQ/Redis + Zod.  
+ScriptAssist (Bun/Mantine/RR7/Orval) stack does **not** apply unless an explicit migration is approved.
+
+## Naming
+See `memory-bank/folder-structure.md`. Prefer kebab-case paths, PascalCase React components.
