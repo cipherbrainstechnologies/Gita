@@ -54,7 +54,12 @@ export async function loadProductMedia(productId: string, slug: string): Promise
       prisma.product.findUnique({where: {id: productId}, select: {images: true}}),
     ]);
     const fromTable: ResolvedMedia[] = rows
-      .filter((m) => !isSharedTemplateUrl(m.fileUrl) || m.approvedForPublication)
+      .filter((m) => {
+        if (isSharedTemplateUrl(m.fileUrl) && !m.approvedForPublication) return false;
+        if (m.visualKind === "TYPOGRAPHIC_FLAT" || m.origin === "TYPOGRAPHIC_PREVIEW") return false;
+        if (m.fileUrl.includes("/api/catalog/visual/")) return false;
+        return true;
+      })
       .map((m) => ({
         src: m.fileUrl,
         view: roleToView[m.mediaRole] ?? "on-model",
@@ -99,6 +104,7 @@ export async function loadStorefrontMediaForProducts(
   const out = new Map<string, ConceptMedia[]>();
   for (const m of rows) {
     if (isSharedTemplateUrl(m.fileUrl) && !m.approvedForPublication) continue;
+    if (m.visualKind === "TYPOGRAPHIC_FLAT" || m.fileUrl.includes("/api/catalog/visual/")) continue;
     const list = out.get(m.productId) ?? [];
     list.push({
       src: m.fileUrl,
