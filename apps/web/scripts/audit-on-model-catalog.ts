@@ -7,7 +7,11 @@ async function main() {
   ).map((p) => p.id);
 
   const onModel = await prisma.productMediaV2.findMany({
-    where: {productId: {in: conceptIds}, visualKind: "ON_MODEL_RASTER", storefrontVisible: true},
+    where: {
+      productId: {in: conceptIds},
+      visualKind: {in: ["ON_MODEL_CPU_COMPOSITE", "ON_MODEL_RASTER", "ON_MODEL_VTON_FREE"]},
+      storefrontVisible: true,
+    },
     select: {productId: true, mediaRole: true, contentSha256: true, fileUrl: true},
   });
 

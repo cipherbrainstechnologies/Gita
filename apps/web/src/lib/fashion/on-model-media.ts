@@ -1,6 +1,7 @@
 import {createHash} from "node:crypto";
 import type {PrismaClient} from "@prisma/client";
 import {buildDesignDna} from "./design-dna";
+import {QA_DISCLOSURE} from "./visual-quality-gate";
 import {onModelApiPath, type OnModelView} from "./render-on-model-raster";
 import type {SkuVisualInput} from "./register-sku-visual";
 
@@ -26,6 +27,11 @@ export async function registerOnModelMedia(
   prisma: PrismaClient,
   p: SkuVisualInput,
   contentShaByView: Partial<Record<OnModelView, string>>,
+  opts?: {
+    rendererVersion?: string;
+    generationSource?: string;
+    fileUrlOverrides?: Partial<Record<OnModelView, string>>;
+  },
 ): Promise<RegisterOnModelResult | null> {
   if (!p.tagline || !p.designBriefFingerprint) return null;
   const meta = p.conceptMeta as Record<string, unknown> | null;
@@ -44,8 +50,10 @@ export async function registerOnModelMedia(
   });
 
   const fingerprint = createHash("sha256")
-    .update(JSON.stringify({dna, v: "on-model-raster-v1"}), "utf8")
+    .update(JSON.stringify({dna, v: opts?.rendererVersion ?? "on-model-raster-v1"}), "utf8")
     .digest("hex");
+  const visualKind = "ON_MODEL_CPU_COMPOSITE";
+  const origin = "CPU_COMPOSITE_PREVIEW";
 
   const imagesJson: {
     src: string;
@@ -62,7 +70,7 @@ export async function registerOnModelMedia(
     const contentSha256 =
       contentShaByView[g.view] ??
       createHash("sha256").update(`${p.slug}:${g.view}:${fingerprint}`, "utf8").digest("hex");
-    const fileUrl = onModelApiPath(p.slug, g.view);
+    const fileUrl = opts?.fileUrlOverrides?.[g.view] ?? onModelApiPath(p.slug, g.view);
     const assetSha256 = assetKey(p.slug, g.mediaRole, contentSha256);
 
     await prisma.productMediaV2.upsert({
@@ -71,10 +79,10 @@ export async function registerOnModelMedia(
         productId: p.id,
         mediaRole: g.mediaRole,
         fileUrl,
-        origin: "ON_MODEL_RASTER",
+        origin,
         assetSha256,
         contentSha256,
-        visualKind: "ON_MODEL_RASTER",
+        visualKind,
         storefrontVisible: true,
         approvedForPublication: false,
         reviewState: "PENDING",
@@ -82,8 +90,8 @@ export async function registerOnModelMedia(
       update: {
         fileUrl,
         contentSha256,
-        origin: "ON_MODEL_RASTER",
-        visualKind: "ON_MODEL_RASTER",
+        origin,
+        visualKind,
         storefrontVisible: true,
         approvedForPublication: false,
       },
@@ -93,10 +101,10 @@ export async function registerOnModelMedia(
       src: fileUrl,
       view: g.view === "lifestyle" ? "lifestyle" : g.view === "detail" ? "detail" : g.view,
       alt: `${p.slug} on-model ${g.view} — ${dna.modelIdentityId}`,
-      origin: "ON_MODEL_RASTER",
+      origin,
       approved: false,
       role: g.mediaRole,
-      visualKind: "ON_MODEL_RASTER",
+      visualKind,
       modelIdentityId: dna.modelIdentityId,
     });
   }
@@ -116,13 +124,17 @@ export async function registerOnModelMedia(
       conceptMeta: {
         ...(meta ?? {}),
         designDna: dna,
-        onModelGeneration: {version: "on-model-raster-v1", fingerprint, modelIdentityId: dna.modelIdentityId},
-        visualVersion: "on-model-raster-v1",
+        onModelGeneration: {
+          rendererVersion: opts?.rendererVersion ?? "on-model-raster-v1",
+          generationSource: opts?.generationSource ?? "CPU_COMPOSITE",
+          fingerprint,
+          modelIdentityId: dna.modelIdentityId,
+        },
+        visualVersion: opts?.rendererVersion ?? "on-model-raster-v1",
       },
       images: imagesJson,
       displaySaleReady: true,
-      disclosure:
-        "On-model product imagery is colour-graded and composed for this SKU's Design DNA. Factory samples and human publication approval are still required before checkout.",
+      disclosure: QA_DISCLOSURE,
     },
   });
 

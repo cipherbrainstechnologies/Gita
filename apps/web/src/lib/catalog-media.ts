@@ -57,6 +57,7 @@ export async function loadProductMedia(productId: string, slug: string): Promise
       .filter((m) => {
         if (isSharedTemplateUrl(m.fileUrl) && !m.approvedForPublication) return false;
         if (m.visualKind === "TYPOGRAPHIC_FLAT" || m.origin === "TYPOGRAPHIC_PREVIEW") return false;
+        if (m.visualKind === "ON_MODEL_RASTER") return false;
         if (m.fileUrl.includes("/api/catalog/visual/")) return false;
         return true;
       })
