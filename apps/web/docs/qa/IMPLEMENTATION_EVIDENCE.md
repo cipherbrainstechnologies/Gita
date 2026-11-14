@@ -41,6 +41,19 @@
 - Shiprocket + DLT WhatsApp/SMS
 - Disable `DEMO_AUTH` before real customers
 
+## Railway production execution (2026-11-14T21:15Z)
+
+| Step | Result |
+|------|--------|
+| `railway up` web (`c4c09f96…`) | SUCCESS |
+| SSH `prisma migrate deploy` | No pending (schema live) |
+| `db:seed:ideas` | 1000 quotes + 1000 briefs |
+| `db:seed:1000-concepts` | 1000 products, 6000 variants |
+| `audit:1000-catalog --catalog-only` | **pass: true** |
+| `GET /api/products?page=1&limit=30` | `total: 1007`, `source: db` |
+| `GET /shop/vmb-0500` | 200 |
+| `GET /api/health` | `dbOk:true redisOk:true checkoutEnabled:false` |
+
 ## 1,000 catalog + deposit patch (cursor/1000-catalog-preorder-133f)
 
 | Check | Result |
