@@ -58,12 +58,7 @@ export async function renderOnModelRaster(
 
   if (view === "front" || view === "back") {
     const art = await renderArtworkPng(dna);
-    const artResized = await sharp(art.bytes)
-      .resize(520, 520, {fit: "inside"})
-      .ensureAlpha()
-      .linear(view === "back" ? [0.92, 0.92, 0.92, 1] : [0.88, 0.88, 0.88, 1])
-      .png()
-      .toBuffer();
+    const artResized = await sharp(art.bytes).resize(520, 520, {fit: "inside"}).png().toBuffer();
     const top = view === "back" ? 360 : 400;
     pipeline = sharp(await pipeline.toBuffer()).composite([
       {input: artResized, top, left: Math.floor((1080 - 520) / 2), blend: "over"},
