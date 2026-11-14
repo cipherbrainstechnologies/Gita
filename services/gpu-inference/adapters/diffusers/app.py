@@ -178,7 +178,7 @@ def check_checkpoint(cp: Optional[str]) -> None:
     if cp is None:
         return
     allowed = [c.strip() for c in os.environ.get("DIFFUSERS_ALLOWED_CHECKPOINTS", "").split(",") if c.strip()]
-    if not CHECKPOINT_RE.match(cp) or (allowed and cp not in allowed):
+    if not CHECKPOINT_RE.match(cp) or ".." in cp or (allowed and cp not in allowed):
         raise HTTPException(422, "checkpoint not permitted")
 
 

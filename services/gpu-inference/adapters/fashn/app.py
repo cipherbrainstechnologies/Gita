@@ -283,7 +283,7 @@ async def tryon(req: TryOnRequest) -> TryOnResponse:
     request_id = uuid.uuid4().hex
     if req.checkpoint is not None:
         allowed = [c.strip() for c in os.environ.get("FASHN_ALLOWED_CHECKPOINTS", "").split(",") if c.strip()]
-        if not CHECKPOINT_RE.match(req.checkpoint) or (allowed and req.checkpoint not in allowed):
+        if not CHECKPOINT_RE.match(req.checkpoint) or ".." in req.checkpoint or (allowed and req.checkpoint not in allowed):
             raise HTTPException(422, "checkpoint not permitted")
     if (req.personImageBase64 is None) != (req.personMimeType is None):
         raise HTTPException(422, "personImageBase64 and personMimeType must be provided together")
