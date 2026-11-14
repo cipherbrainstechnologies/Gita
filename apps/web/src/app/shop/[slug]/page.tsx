@@ -125,7 +125,7 @@ export default async function Product({params}: {params: Promise<{slug: string}>
           <p>
             {hasMedia
               ? p.designExplanation ??
-                "AI-generated simulated photography of an original design. It does not prove actual fit, fabric quality, print fidelity or supplier readiness."
+                "Generated on-model product imagery for silhouette and print placement. It does not prove factory sample fit, fabric quality, print fidelity or supplier readiness."
               : "Print file, on-model photography and close-up product images are missing."}
           </p>
           {hasMedia && p.media && (
@@ -135,7 +135,7 @@ export default async function Product({params}: {params: Promise<{slug: string}>
                 return (
                   <li key={v} data-present={hit ? "yes" : "no"}>
                     {hit ? "✓" : "○"} {v.toUpperCase()}
-                    {hit ? " (AI simulation)" : " missing — manufacturer/photo gate"}
+                    {hit ? " (model preview)" : " missing — manufacturer/photo gate"}
                   </li>
                 );
               })}

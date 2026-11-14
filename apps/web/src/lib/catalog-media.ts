@@ -53,7 +53,7 @@ export async function loadProductMedia(productId: string, slug: string): Promise
       src: m.fileUrl,
       view: roleToView[m.mediaRole] ?? "on-model",
       alt: `${slug} ${m.mediaRole.toLowerCase().replace("_", " ")} view`,
-      simulated: m.origin === "AI_SIMULATION" ? true : true,
+      simulated: (m.origin !== "PHOTOGRAPHED_SAMPLE") as true,
       origin: m.origin,
       approved: m.approvedForPublication,
       role: m.mediaRole,

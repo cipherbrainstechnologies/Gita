@@ -2,6 +2,7 @@
 import {useState} from "react";
 import Image from "next/image";
 import type {ResolvedMedia} from "@/lib/catalog-media";
+import {MODEL_PREVIEW_WATERMARK, PHOTO_SAMPLE_WATERMARK} from "@/lib/storefront-copy";
 
 type Props = {
   images: ResolvedMedia[];
@@ -13,7 +14,7 @@ export function OnModelProductGallery({images, productName, disclosure}: Props) 
   const [active, setActive] = useState(0);
   const current = images[active] ?? images[0];
   if (!current) return null;
-  const simulated = current.origin !== "PHOTOGRAPHED_SAMPLE";
+  const isPhotoSample = current.origin === "PHOTOGRAPHED_SAMPLE";
   return (
     <div className="editorial-gallery on-model-gallery">
       <div className="editorial-primary">
@@ -27,7 +28,7 @@ export function OnModelProductGallery({images, productName, disclosure}: Props) 
           className="editorial-photo"
         />
         <span className="editorial-watermark">
-          {simulated ? "AI SIMULATION — NOT A PHYSICAL SAMPLE" : "PHOTOGRAPHED SAMPLE"}
+          {isPhotoSample ? PHOTO_SAMPLE_WATERMARK : MODEL_PREVIEW_WATERMARK}
         </span>
       </div>
       {disclosure && <p className="small-note pdp-disclosure">{disclosure}</p>}
