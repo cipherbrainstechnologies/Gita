@@ -6,6 +6,7 @@ import {auth} from "@/auth";
 import {AddToCart} from "@/components/AddToCart";
 import {GarmentArt} from "@/components/GarmentArt";
 import {DemoBanner} from "@/components/DemoBanner";
+import {OnModelProductGallery} from "@/components/OnModelProductGallery";
 import {EditorialGallery} from "@/components/EditorialGallery";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +26,11 @@ export default async function Product({params}: {params: Promise<{slug: string}>
     <div className="pdp page-wrap pdp-upgraded">
       <div className="pdp-gallery">
         {hasMedia && p.media ? (
-          <EditorialGallery images={p.media} productName={p.name} />
+          p.source === "db" ? (
+            <OnModelProductGallery images={p.media} productName={p.name} disclosure={p.disclosure} />
+          ) : (
+            <EditorialGallery images={p.media} productName={p.name} />
+          )
         ) : (
           <div className="photo-empty-state">
             <span className="pdp-mini-label">PRODUCT IMAGERY NOT APPROVED</span>

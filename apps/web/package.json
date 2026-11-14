@@ -20,6 +20,8 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed:ideas": "tsx scripts/seed-ideas.ts",
     "db:seed:catalog": "tsx scripts/seed-catalog.ts",
+    "db:seed:1000-concepts": "tsx scripts/seed-1000-product-concepts.ts",
+    "audit:1000-catalog": "tsx scripts/audit-1000-catalog.ts",
     "db:seed:demo": "tsx scripts/seed-demo.ts",
     "db:seed:v2-content": "tsx scripts/seed-v2-content.ts",
     "verify:v2": "python scripts/verify_v2.py",

@@ -2,6 +2,7 @@ import {randomBytes} from "node:crypto";
 import {Prisma} from "@prisma/client";
 import {z} from "zod";
 import {prisma} from "./db";
+import {calculateDepositBreakdown} from "./deposit";
 import {calculateCart} from "./money";
 import {decryptSecret, encryptSecret} from "./vault";
 
@@ -57,7 +58,7 @@ export async function createDraftOrder(a: {email: string; input: OrderInput; ide
     return prior?.result ? {status: 200, body: prior.result as Record<string, unknown>} : fail(409, "REQUEST_IN_PROGRESS", "A request with this Idempotency-Key is already being processed.");
   }
 
-  let order: {id: string; publicId: string; totalPaise: bigint; capacityId: string};
+  let order: {id: string; publicId: string; totalPaise: bigint; chargeDuePaise: bigint; capacityId: string};
   try {
     order = await prisma.$transaction(async tx => {
       const variant = await tx.productVariant.findFirst({where: {size: input.size, enabled: true, product: {slug: input.productSlug, status: "PREORDER"}}, include: {product: true}});
@@ -73,13 +74,17 @@ export async function createDraftOrder(a: {email: string; input: OrderInput; ide
       const tax = (gross * BigInt(variant.taxRateBasisPoints)) / BigInt(10000 + variant.taxRateBasisPoints);
       const shipping = BigInt(process.env.SHIPPING_FLAT_PAISE ?? "0");
       const t = calculateCart([{unitPaise: variant.pricePaise, quantity: input.quantity, discountPaise: 0n, taxPaise: 0n}], shipping);
+      const policy = await tx.depositPolicy.findUnique({where: {id: "default"}});
+      const depositCheckout = process.env.ENABLE_DEPOSIT_CHECKOUT === "true";
+      const staged = calculateDepositBreakdown(t.totalPaise, policy, {depositCheckoutEnabled: depositCheckout});
       const created = await tx.order.create({data: {
         publicId: `VM-${randomBytes(5).toString("hex").toUpperCase()}`, customerId: customer.id, status: "DRAFT",
-        subtotalPaise: t.subtotalPaise, shippingPaise: t.shippingPaise, taxPaise: tax, totalPaise: t.totalPaise,
+        subtotalPaise: t.subtotalPaise, shippingPaise: t.shippingPaise, taxPaise: tax, totalPaise: staged.fullTotalPaise,
+        chargeDuePaise: staged.chargeNowPaise, depositDuePaise: staged.depositDuePaise, balanceDuePaise: staged.balanceDuePaise,
         addressEncrypted: JSON.stringify(encryptSecret(JSON.stringify(input.shipping), "ORDER_ADDRESS")),
         legalSellerSnapshot: sellerSnap, shippingPromise: {from: cap.shipWindowFrom.toISOString(), to: cap.shipWindowTo.toISOString()},
-        acceptedPolicy: {policies, acceptedAt: new Date().toISOString()}
-      }, select: {id: true, publicId: true, totalPaise: true}});
+        acceptedPolicy: {policies, acceptedAt: new Date().toISOString(), deposit: staged.usingDeposit ? {depositPaise: staged.depositDuePaise.toString(), balancePaise: staged.balanceDuePaise.toString()} : null}
+      }, select: {id: true, publicId: true, totalPaise: true, chargeDuePaise: true}});
       await tx.orderLine.create({data: {orderId: created.id, productId: variant.productId, variantId: variant.id, skuSnapshot: variant.sku, description: variant.product.title, quantity: input.quantity, unitPaise: variant.pricePaise, taxPaise: tax, discountPaise: 0n, attributes: {size: variant.size, colour: variant.colour, fit: variant.fit}}});
       return {...created, capacityId: cap.id};
     });
@@ -98,14 +103,22 @@ export async function createDraftOrder(a: {email: string; input: OrderInput; ide
     const res = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST", signal: AbortSignal.timeout(10_000),
       headers: {"Content-Type": "application/json", Authorization: "Basic " + Buffer.from(`${creds.keyId}:${creds.keySecret}`).toString("base64")},
-      body: JSON.stringify({amount: Number(order.totalPaise), currency: "INR", receipt: order.publicId, notes: {orderPublicId: order.publicId}})
+      body: JSON.stringify({amount: Number(order.chargeDuePaise > 0n ? order.chargeDuePaise : order.totalPaise), currency: "INR", receipt: order.publicId, notes: {orderPublicId: order.publicId}})
     });
     const rp = (await res.json()) as {id?: string};
     if (!res.ok || !rp.id) throw new Error("provider " + res.status);
-    const body = {orderId: order.publicId, status: "PAYMENT_PENDING", razorpayOrderId: rp.id, keyId: creds.keyId, amountPaise: order.totalPaise.toString(), currency: "INR",
-      notice: "Order created but NOT paid. Payment is recorded only after a verified Razorpay webhook."};
+    const charge = order.chargeDuePaise > 0n ? order.chargeDuePaise : order.totalPaise;
+    const usingDeposit = charge < order.totalPaise;
+    const body = {
+      orderId: order.publicId, status: "PAYMENT_PENDING", razorpayOrderId: rp.id, keyId: creds.keyId,
+      amountPaise: charge.toString(), fullTotalPaise: order.totalPaise.toString(), balanceDuePaise: (order.totalPaise - charge).toString(),
+      paymentStage: usingDeposit ? "DEPOSIT" : "FULL", currency: "INR",
+      notice: usingDeposit
+        ? "Order created for a ₹ deposit only. Balance is due before manufacturing. Payment is recorded only after a verified Razorpay webhook."
+        : "Order created but NOT paid. Payment is recorded only after a verified Razorpay webhook.",
+    };
     await prisma.$transaction([
-      prisma.payment.create({data: {orderId: order.id, provider: "RAZORPAY", providerOrderId: rp.id, status: "CREATED", amountPaise: order.totalPaise}}),
+      prisma.payment.create({data: {orderId: order.id, provider: "RAZORPAY", providerOrderId: rp.id, status: "CREATED", amountPaise: charge, intentType: usingDeposit ? "DEPOSIT" : "FULL"}}),
       prisma.order.update({where: {id: order.id}, data: {status: "PAYMENT_PENDING"}}),
       prisma.auditLog.create({data: {actor: `customer:${customer.id}`, action: "ORDER_DRAFT_CREATED", target: order.publicId, details: {razorpayOrderId: rp.id}}}),
       prisma.externalIdempotency.update({where: {operation_externalKey: {operation: "checkout", externalKey: idemKey}}, data: {result: body}})

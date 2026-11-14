@@ -213,10 +213,32 @@ export type CatalogProduct = {
   source: "db" | "sample";
   variants: CatalogVariant[];
   media?: ConceptMedia[];
+  theme?: string;
+  language?: string;
+  audienceFit?: string;
+  disclosure?: string;
   verseReference?: string;
   sourceUrl?: string;
   designExplanation?: string;
   fabricTarget?: string;
+};
+
+export type CatalogQueryInput = {
+  page?: number;
+  pageSize?: number;
+  category?: string;
+  theme?: string;
+  fit?: string;
+  audienceFit?: string;
+  q?: string;
+};
+
+export type CatalogPage = {
+  items: CatalogProduct[];
+  total: number;
+  page: number;
+  pageSize: number;
+  orderableOnPage: number;
 };
 
 const SIZE_ORDER = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "3XL"];
@@ -254,7 +276,7 @@ export function fromSample(d: DemoProduct): CatalogProduct {
 }
 
 type DbRow = Prisma.ProductGetPayload<{include: {variants: true}}>;
-export function fromDb(r: DbRow): CatalogProduct {
+export function fromDb(r: DbRow, media?: ConceptMedia[]): CatalogProduct {
   const orderable = r.status === "PREORDER" && r.variants.some((v) => v.enabled);
   const shown = orderable ? r.variants.filter((v) => v.enabled) : r.variants;
   const paise = shown.map((v) => v.pricePaise).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
@@ -270,6 +292,10 @@ export function fromDb(r: DbRow): CatalogProduct {
     status: r.status,
     orderable,
     source: "db",
+    theme: r.theme ?? undefined,
+    language: r.language ?? undefined,
+    audienceFit: r.audienceFit,
+    disclosure: r.disclosure ?? undefined,
     sizes: [...new Set(shown.map((v) => v.size))].sort(bySize),
     priceInr: paise.length ? Number(paise[0]) / 100 : null,
     variants: r.variants.map((v) => ({
@@ -278,51 +304,134 @@ export function fromDb(r: DbRow): CatalogProduct {
       pricePaise: v.pricePaise.toString(),
       enabled: v.enabled,
     })),
-    media: ed?.media,
+    media: media?.length ? media : ed?.media,
     verseReference: ed?.verseReference,
     sourceUrl: ed?.sourceUrl,
-    designExplanation: ed?.designExplanation,
+    designExplanation: ed?.designExplanation ?? r.description ?? undefined,
     fabricTarget: ed?.fabricTarget,
   };
 }
 
-/** null = database unavailable. [] = reachable but empty. */
-async function loadDb(): Promise<CatalogProduct[] | null> {
+function mergeEditorialSamples(items: CatalogProduct[]): CatalogProduct[] {
+  const bySlug = new Map(items.map((p) => [p.slug, p]));
+  for (const sample of sampleConcepts) {
+    if (!bySlug.has(sample.slug)) bySlug.set(sample.slug, fromSample(sample));
+  }
+  return [...bySlug.values()];
+}
+
+function catalogWhere(input: CatalogQueryInput): Prisma.ProductWhereInput {
+  const where: Prisma.ProductWhereInput = {status: {not: "ARCHIVED"}};
+  if (input.category === "tees" || input.category === "pants") where.category = input.category;
+  if (input.theme?.trim()) where.theme = input.theme.trim().toUpperCase();
+  if (input.audienceFit?.trim()) where.audienceFit = input.audienceFit.trim();
+  if (input.fit?.trim()) where.variants = {some: {fit: {contains: input.fit.trim(), mode: "insensitive"}}};
+  const q = input.q?.trim();
+  if (q) {
+    where.OR = [
+      {title: {contains: q, mode: "insensitive"}},
+      {tagline: {contains: q, mode: "insensitive"}},
+      {slug: {contains: q.toLowerCase(), mode: "insensitive"}},
+      {theme: {contains: q.toUpperCase(), mode: "insensitive"}},
+    ];
+  }
+  return where;
+}
+
+/** Paginated storefront query — never loads the full 1,000-record catalog in one request. */
+export async function queryCatalogPage(input: CatalogQueryInput = {}): Promise<CatalogPage | null> {
   if (!process.env.DATABASE_URL) return null;
+  const pageSize = Math.min(36, Math.max(1, input.pageSize ?? 30));
+  const page = Math.max(1, input.page ?? 1);
   try {
     const {prisma} = await import("./db");
-    const rows = await withTimeout(
-      prisma.product.findMany({
-        where: {status: {not: "ARCHIVED"}},
-        include: {variants: {orderBy: {sku: "asc"}}},
-        orderBy: [{createdAt: "asc"}, {slug: "asc"}],
-      }),
-      3000,
+    const where = catalogWhere(input);
+    const [total, rows] = await withTimeout(
+      Promise.all([
+        prisma.product.count({where}),
+        prisma.product.findMany({
+          where,
+          include: {variants: {orderBy: {sku: "asc"}}},
+          orderBy: [{createdAt: "desc"}, {slug: "asc"}],
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+        }),
+      ]),
+      4000,
     );
-    return rows.map(fromDb);
+    const items = rows.map((r) => fromDb(r));
+    return {items, total, page, pageSize, orderableOnPage: items.filter((p) => p.orderable).length};
   } catch {
     return null;
   }
 }
 
+export async function getOrderableProducts(): Promise<CatalogProduct[]> {
+  if (!process.env.DATABASE_URL) return [];
+  try {
+    const {prisma} = await import("./db");
+    const rows = await withTimeout(
+      prisma.product.findMany({
+        where: {status: "PREORDER", variants: {some: {enabled: true}}},
+        include: {variants: {where: {enabled: true}, orderBy: {sku: "asc"}}},
+        orderBy: {title: "asc"},
+      }),
+      3000,
+    );
+    return rows.map((r) => fromDb(r));
+  } catch {
+    return [];
+  }
+}
+
 /**
- * Prefer DB catalog when present. Always overlay editorial media from sampleConcepts by slug.
- * When DB is empty/unreachable, fall back to sample concepts (never orderable).
+ * Lightweight legacy list for checkout/cart/home. Uses pagination when the DB catalog is large.
  */
 export async function getCatalogProducts(): Promise<CatalogProduct[]> {
-  const db = await loadDb();
-  if (db && db.length) {
-    const bySlug = new Map(db.map((p) => [p.slug, p]));
-    for (const sample of sampleConcepts) {
-      if (!bySlug.has(sample.slug)) bySlug.set(sample.slug, fromSample(sample));
+  if (!process.env.DATABASE_URL) return sampleConcepts.map(fromSample);
+  try {
+    const {prisma} = await import("./db");
+    const total = await withTimeout(prisma.product.count({where: {status: {not: "ARCHIVED"}}}), 2000);
+    if (!total) return sampleConcepts.map(fromSample);
+    if (total > 60) {
+      const page = await queryCatalogPage({pageSize: 36, page: 1});
+      const core = page?.items ?? [];
+      return mergeEditorialSamples(core);
     }
-    return [...bySlug.values()];
+    const rows = await withTimeout(
+      prisma.product.findMany({
+        where: {status: {not: "ARCHIVED"}},
+        include: {variants: {orderBy: {sku: "asc"}}},
+        orderBy: [{createdAt: "asc"}, {slug: "asc"}],
+        take: 200,
+      }),
+      4000,
+    );
+    return mergeEditorialSamples(rows.map((r) => fromDb(r)));
+  } catch {
+    return sampleConcepts.map(fromSample);
   }
-  return sampleConcepts.map(fromSample);
 }
 
 export async function getProductBySlug(slug: string): Promise<CatalogProduct | null> {
-  return (await getCatalogProducts()).find((p) => p.slug === slug) ?? null;
+  const sample = sampleConcepts.find((x) => x.slug === slug);
+  if (!process.env.DATABASE_URL) return sample ? fromSample(sample) : null;
+  try {
+    const {prisma} = await import("./db");
+    const {loadProductMedia} = await import("./catalog-media");
+    const row = await withTimeout(
+      prisma.product.findFirst({
+        where: {slug, status: {not: "ARCHIVED"}},
+        include: {variants: {orderBy: {sku: "asc"}}},
+      }),
+      3000,
+    );
+    if (!row) return sample ? fromSample(sample) : null;
+    const media = await loadProductMedia(row.id, slug);
+    return fromDb(row, media);
+  } catch {
+    return sample ? fromSample(sample) : null;
+  }
 }
 
 /** Saleability gate: never allow payment without PREORDER + enabled variant + platform checkout flag. */

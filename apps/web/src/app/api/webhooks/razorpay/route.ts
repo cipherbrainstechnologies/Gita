@@ -113,16 +113,19 @@ export async function POST(request: Request) {
               capturedAt: new Date(),
             },
           });
+          const depositCapture = paymentRow.intentType === 'DEPOSIT';
           await tx.order.update({
             where: {id: paymentRow.orderId},
-            data: {status: 'PAID', paidAt: new Date()},
+            data: depositCapture
+              ? {status: 'DEPOSIT_PAID', depositPaidAt: new Date()}
+              : {status: 'PAID', paidAt: new Date()},
           });
           await tx.auditLog.create({
             data: {
               actor: 'system:razorpay-webhook',
-              action: 'ORDER_PAID',
+              action: depositCapture ? 'ORDER_DEPOSIT_PAID' : 'ORDER_PAID',
               target: paymentRow.orderId,
-              details: {providerPaymentId, providerOrderId, eventType},
+              details: {providerPaymentId, providerOrderId, eventType, intentType: paymentRow.intentType},
             },
           });
         });
