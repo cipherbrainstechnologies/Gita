@@ -1,7 +1,8 @@
 # Release decision
 
 **Date:** 2026-11-14  
-**Production web deploy:** CLI `railway up` (catalog branch)  
+**Production web deploy:** `76467c39-89dc-4c0e-a33f-c047a6e67d25` (enterprise admin + attach script)  
+**Post-deploy SSH:** `db:attach:concept-gallery` → 1000 front + 1000 back media rows; audit pass  
 **Checkout:** `ENABLE_CHECKOUT` false; `DepositPolicy.enabled` false  
 
 ## GO
