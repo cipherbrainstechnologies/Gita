@@ -56,3 +56,19 @@ Gita/                              # monorepo root (git remote: Gita)
 - Do not commit `node_modules/`, `.next/`, model weights, or secrets.
 - Do not nest a second product app at repo root next to `apps/`.
 - Do not rename vendor package folders away from upstream names (breaks docs/clone scripts).
+
+## `apps/web/src/modules/admin` (staff surfaces)
+
+```text
+src/modules/admin/
+├── shared/        # http.ts (staffRoute, ApiError, readJson, parse), audit.ts (Db, writeAudit), permissions.ts (role matrix, demoAuth)
+├── catalog/       # catalog.{schema,rules,repository,service}.ts   rules = pure status/PREORDER gate
+├── orders/        # lifecycle transitions, refund request (no provider call)
+├── studio/        # approval inbox, human review merge into semanticReview
+├── marketing/     # Promotion CRUD (percent-off, explicit IST offsets)
+├── franchise/     # Store list + DEMO_AUTH-only COMPANY pilot
+├── integrations/  # test-connection runner (injected fetch/vault for tests)
+└── dashboard/     # live counts, IST day boundary
+```
+
+Convention: `*.rules.ts` and `*.schema.ts` must not import `@/lib/admin`, `@/lib/db` or `@/auth` (keeps them client-safe and unit-testable). Client components import only rules/types, never services.

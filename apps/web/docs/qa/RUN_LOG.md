@@ -34,3 +34,40 @@ Evidence:
 - `POST /api/checkout` waitlist â†’ **202** WAITLISTED (no payment).
 
 Still BLOCKED for revenue: Google OAuth credentials, Razorpay merchant + webhook secret, legal seller/GSTIN, approved policy versions, supplier sign-off, GPU host URLs for diffusers/FASHN.
+
+## 2026-11-15 - Customer account & commerce UX (code-level verification only)
+
+Added: `/account`, `/orders` (real data), `/account/waitlist`, `/cart`, `/size-chart`, `/contact`; `GET /api/orders` (real, session-scoped, 401/503 JSON errors), `/api/cart` (GET/POST/PATCH/DELETE); signed-in preorder `CheckoutForm` (shipping fields, policy checkbox, `Idempotency-Key` via `crypto.randomUUID`, key rotates per request body); PDP add-to-cart for orderable items; DB-driven `/policies`; `LoginForm` (credentials, demo only); `DemoBanner`; `CartItem` model + `NotificationOutbox.destination/payload` columns (migration `20251115010000_cart_demo`); outbox enqueue on waitlist join and order creation.
+
+Verified: `npx tsc --noEmit` clean; `npx eslint src` clean; `npx vitest run` 64 passed (new: order timeline + INR formatting); `npx prisma validate` OK; `next build` compiles our code, but fails type-check on `.next/types/app/api/admin/catalog/route.ts` (admin route owned by another change set, not part of this work).
+
+NOT run: migration against Postgres, any page against a live DB/session, credentials sign-in (provider wiring is in `auth.ts`, owned by parent), Razorpay, browser/accessibility checks.
+
+## 2026-11-15 - Staff/admin surfaces (Windows, Node v26.5.0)
+
+- `npx vitest run src/modules`: PASS, 8 files / 65 tests (catalog gates, order transitions, studio review, promotion schema, franchise schema + IST boundary, integration test-connection with injected fetch, `staffRoute` gate/503/415/422 behaviour).
+- `npx tsc --noEmit`: no errors in `src/`; the only errors are in the untracked `docs/Version 2/` snapshot (not part of this change; it also makes plain `next build` fail its type step).
+- `npx eslint src vitest.config.ts`: clean.
+- `next build` run on a temporary copy of `apps/web` without `docs/`: PASS; all new `/admin/*` and `/api/admin/*` routes compiled (`.next/types` route-signature check required `staffRoute` to take a mandatory second arg).
+- Runtime smoke (`next start`, no DATABASE_URL, AUTH_SECRET only): every new admin GET/POST returns 403; `/admin` renders the "Staff access only" gate; header shows no Staff link for anonymous visitors.
+- NOT run: any admin write against Postgres, authenticated staff session, Razorpay/GPU live probes, browser/accessibility checks.
+
+## 2026-11-15 — V2 storefront + content library (feat/v2-storefront-content)
+
+Commands:
+- Copied V2 assets from `docs/Version 2` into live `apps/web` (images, data/v2, docs/v2, EditorialGallery, inspiration, verse-library) without replacing Admin/Staff modules owned by parallel agent.
+- Generated Quiet Power front/back/detail concept photography into `public/images/quiet-power-editorial-*.webp` (AI-simulated; labelled on PDP).
+- Added Prisma models + SQL migration `20251115030000_v2_content_library`.
+- Added `scripts/seed-v2-content.ts`, `/admin/content`, `/admin/collections`, `src/lib/studio-pipeline.ts`, catalog media + `isSaleable`.
+
+Local verification (this session): see commands after `npm run test` / `typecheck` / `build` below.
+
+Railway: Root Directory must remain `apps/web`. Do not deploy nested `docs/Version 2` kit. Redeploy after merge; run `npx prisma migrate deploy` then `npm run db:seed:v2-content` on web service when Postgres is linked.
+
+GO / NO-GO for real payments: **NO-GO** (unchanged gates).
+
+### Local verification (this session)
+- `npx prisma generate`: PASS
+- `npm run test`: PASS — 15 files / **124 tests**
+- `npm run typecheck`: PASS
+- `npm run build`: PASS — routes include `/inspiration`, `/shop/[slug]`, `/admin/content`, `/admin/collections`

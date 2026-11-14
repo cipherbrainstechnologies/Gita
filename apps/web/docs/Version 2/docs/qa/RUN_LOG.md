@@ -1,0 +1,5 @@
+# Actual test run evidence — start here
+
+2026-11-14: Kit authored offline. Node dependency installation unavailable in this packaging sandbox because the npm registry could not be resolved (`EAI_AGAIN`); therefore **no claim** that initial Next.js/Prisma app has compiled or integration tests passed. Static code and CSV uniqueness checks are documented at ZIP creation. Cursor must install, compile, run real tests and update this file with commands, outcomes and logs.
+
+Static verification on 2026-11-14: `python3 scripts/verify_seed.py` PASS (exactly 1,000 verse drafts and 1,000 design briefs, unique fingerprints). `package.json` and `tsconfig.json` JSON parsed; Next page and API entrypoints present. `node --check eslint.config.mjs` and Python compilation pass. `tsc --noEmit` cannot meaningfully check the application before dependencies are installed; missing Next/React/@types/node types are expected. `npm install` attempted but blocked by npm registry DNS `EAI_AGAIN`. Cursor must rerun all tests with network and a real Postgres service.

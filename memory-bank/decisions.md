@@ -49,3 +49,23 @@
 - Affected Modules: providers, gpu-inference, worker
 - Reversal Conditions: Managed GPU product on Railway with verified CUDA capacity.
 - Status: Active
+
+### Decision #006 – Customer account UX, DB cart and demo flags
+
+- Date: 2026-11-15
+- Author: Agent (customer UX task)
+- Summary: Added `/account`, `/orders` (real data), `/account/waitlist`, `/cart`, `/size-chart`, `/contact`, `/api/cart`, session-scoped `GET /api/orders`. New layered modules under `apps/web/src/modules/{orders,cart,notifications,account}` (route/page = controller, `*.service.ts`, `*.repository.ts`). Schema: new `CartItem` (intent only: customerId, productSlug, size, quantity; unique per customer+slug+size; no price, no reservation) and additive nullable `NotificationOutbox.destination/payload` (migration `20251115010000_cart_demo`; `migrate deploy` required). Demo surfaces are controlled by `DEMO_AUTH` (server) and `NEXT_PUBLIC_DEMO_MODE` (public); they only affect UI hints/banners and the no-op outbox sender (`SENT_DEMO`). Authorisation stays server-side (`auth()` on every page/API).
+- Reason: Customers need to view orders/waitlist and preorder end-to-end; cart is deliberately price-free so checkout (server) remains the sole source of totals and capacity.
+- Affected Modules: `prisma/schema.prisma`, `/api/checkout` (enqueues outbox only), `/api/orders`, `/api/cart`, login, PDP, policies
+- Reversal Conditions: Replace `CartItem` with multi-line order drafts if multi-item checkout is built; drop demo flags once real auth/email are live.
+- Status: Active
+
+### Decision #007 - Staff/admin surfaces: one gate, layered modules, fail-closed demo switches
+
+- Date: 2026-11-15
+- Author: Agent (staff/admin task)
+- Summary: Admin write APIs live under `apps/web/src/modules/admin/<area>/` as `*.schema.ts` (zod) -> `*.rules.ts` (pure, client-safe, unit-tested) -> `*.service.ts` (orchestration + audit) -> `*.repository.ts` (Prisma, accepts a transaction client). Route handlers under `src/app/api/admin/**` are thin controllers wrapped by `staffRoute` (`modules/admin/shared/http.ts`): the staff gate (`requireAdmin(roles)` in `src/lib/admin.ts`, DB-backed on every request) runs before body parsing; non-staff 403; unverifiable authorisation 503; JSON content-type required (CSRF hardening); domain errors map to `{error:{code,message}}`. Role matrix is centralised in `modules/admin/shared/permissions.ts`. Pages use `gateAdmin` (ok/forbidden/unavailable). `DEMO_AUTH==='true'` is the only demo switch and unlocks exactly three things, each audited: PREORDER without confirmed capacity (checkout still refuses orders without real capacity), approving simulation-only designs, creating a COMPANY pilot store. Refunds only create `Refund(PENDING_APPROVAL)` + order `REFUND_PENDING`; no provider call. Promotions are stored but NOT yet applied at checkout.
+- Reason: Admin was read-only scaffold; money, stock and publication decisions need server-enforced gates, audit trails and no fake success.
+- Affected Modules: `src/lib/admin.ts`, `src/modules/admin/**`, `src/app/api/admin/**`, `src/app/admin/**`, `src/components/admin/**`, `Header` (Staff link), `IntegrationControls`, `vitest.config.ts` (adds `@/` alias)
+- Reversal Conditions: Replace role matrix with an invitation/RBAC admin UI (E03); replace demo switches once real supplier capacity and POS flows exist.
+- Status: Active

@@ -1,32 +1,169 @@
 import {notFound} from "next/navigation";
 import Link from "next/link";
-import {getProductBySlug} from "@/lib/catalog";
+import {getProductBySlug, isSaleable} from "@/lib/catalog";
 import {checkoutEnabled} from "@/lib/config";
+import {auth} from "@/auth";
+import {AddToCart} from "@/components/AddToCart";
 import {GarmentArt} from "@/components/GarmentArt";
+import {DemoBanner} from "@/components/DemoBanner";
+import {EditorialGallery} from "@/components/EditorialGallery";
 
 export const dynamic = "force-dynamic";
+
 export default async function Product({params}: {params: Promise<{slug: string}>}) {
   const {slug} = await params;
   const p = await getProductBySlug(slug);
   if (!p) notFound();
-  // Orderable requires DB status PREORDER + enabled variant AND the platform checkout flag.
-  const buy = p.orderable && checkoutEnabled();
-  const q = (size: string) => `/checkout?product=${encodeURIComponent(p.slug)}&size=${encodeURIComponent(size)}`;
-  return <div className="pdp page-wrap">
-    <div className="pdp-image"><GarmentArt product={p} large /></div>
-    <div className="pdp-info">
-      <p className="kicker dark">{p.collection} / {p.orderable ? "PREORDER" : "SAMPLE DESIGN"}</p>
-      <h1>{p.name}</h1>
-      <p className="pdp-line">“{p.line}”</p>
-      {p.priceInr !== null && <p className="price-big">₹{p.priceInr.toLocaleString("en-IN")} <small>{buy ? "preorder price; taxes and shipping are itemised at checkout" : "illustrative target price, not an offer"}</small></p>}
-      <div className="info-block"><b>ARTWORK</b><p>{p.orderable ? "Artwork approved for production." : "Digital typographic concept. Not a physical sample. Print proof pending."}</p></div>
-      <div className="info-block"><b>{buy ? "CHOOSE SIZE" : "FIT / SIZES UNDER REVIEW"}</b>
-        <p>{p.fit}{p.sizes.length ? ` · ${buy ? "Available" : "Proposed"} ${p.sizes.join(", ")}.` : ""}{buy ? "" : " Final garment measurements and availability must be confirmed by manufacturer."}</p>
-        {p.sizes.length > 0 && <div className="filter-row">{p.sizes.map(s => <Link key={s} href={q(s)}>{s}</Link>)}</div>}
+
+  const buy = isSaleable(p, checkoutEnabled());
+  const signedIn = buy ? Boolean((await auth())?.user?.email) : false;
+  const q = (size: string) =>
+    `/checkout?product=${encodeURIComponent(p.slug)}&size=${encodeURIComponent(size)}`;
+  const hasMedia = Boolean(p.media?.length);
+
+  return (
+    <div className="pdp page-wrap pdp-upgraded">
+      <div className="pdp-gallery">
+        {hasMedia && p.media ? (
+          <EditorialGallery images={p.media} productName={p.name} />
+        ) : (
+          <div className="photo-empty-state">
+            <span className="pdp-mini-label">PRODUCT IMAGERY NOT APPROVED</span>
+            <h2>{p.line}</h2>
+            <p>
+              This design brief needs a front photo, back photo, fabric close-up, on-model fit image
+              and print proof before it can become a purchasable product. SVG concept art is not
+              saleable merchandise.
+            </p>
+            <div className="pdp-image" aria-hidden>
+              <GarmentArt product={p} large />
+            </div>
+            <Link href="/shop/karma-action-oversized-tee" className="text-link">
+              VIEW PHOTOGRAPHY DIRECTION
+            </Link>
+          </div>
+        )}
       </div>
-      <div className="info-block"><b>PREORDER STATUS</b><p>{buy ? "Preorder is open. Made after you order; dispatch window is confirmed at checkout." : "Not accepting orders. Leave your email and we will tell you if this piece is approved for preorder."}</p></div>
-      <Link className={buy ? "primary-cta" : "button-outline"} href={q(p.sizes[0] ?? "M")}>{buy ? "PREORDER" : "JOIN THE WAITLIST"}</Link>
-      <p><Link href="/shop" className="text-link">← BACK TO CONCEPTS</Link></p>
+
+      <div className="pdp-info">
+        <DemoBanner />
+        <p className="kicker dark">
+          {p.collection} / {buy ? "PREORDER" : "DESIGN CONCEPT"}
+        </p>
+        <h1>{p.name}</h1>
+        <p className="pdp-line">“{p.line}”</p>
+        {p.verseReference && (
+          <p className="pdp-source">
+            Inspired by{" "}
+            {p.sourceUrl ? (
+              <a href={p.sourceUrl} target="_blank" rel="noreferrer">
+                {p.verseReference}
+              </a>
+            ) : (
+              p.verseReference
+            )}{" "}
+            · modern editorial interpretation, not a verbatim translation
+          </p>
+        )}
+
+        {p.priceInr !== null && (
+          <p className="price-big">
+            ₹{p.priceInr.toLocaleString("en-IN")}{" "}
+            <small>
+              {buy
+                ? "preorder price; taxes and shipping are itemised at checkout"
+                : "illustrative target only — no payment accepted"}
+            </small>
+          </p>
+        )}
+
+        <div className="product-configuration">
+          <strong>FIT</strong>
+          <p>{p.fit || "Fit pending supplier grading."}</p>
+          <strong>{buy ? "CHOOSE SIZE" : "PROPOSED SIZES"}</strong>
+          {p.sizes.length > 0 ? (
+            buy ? (
+              <div className="filter-row">
+                {p.sizes.map((s) => (
+                  <Link key={s} href={q(s)}>
+                    {s}
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="pdp-size-pills">
+                {p.sizes.map((s) => (
+                  <span key={s} title="Proposed size only">
+                    {s}
+                  </span>
+                ))}
+              </div>
+            )
+          ) : (
+            <p>Sizes not listed until manufacturer grading is signed.</p>
+          )}
+          <p className="small-note">
+            Actual garment measurements and grading require signed supplier specifications.
+          </p>
+        </div>
+
+        <div className="info-block">
+          <b>FABRIC & CONSTRUCTION</b>
+          <p>
+            {p.fabricTarget ??
+              "Material composition, fabric weight, yarn type, stitching, shrinkage, dye fastness, printing method and care label are not yet confirmed."}
+          </p>
+        </div>
+
+        <div className="info-block">
+          <b>ARTWORK & MEDIA</b>
+          <p>
+            {hasMedia
+              ? p.designExplanation ??
+                "AI-generated simulated photography of an original design. It does not prove actual fit, fabric quality, print fidelity or supplier readiness."
+              : "Print file, on-model photography and close-up product images are missing."}
+          </p>
+        </div>
+
+        <div className="info-block">
+          <b>PREORDER STATUS</b>
+          <p>
+            {buy
+              ? "Preorder is open. Made after you order; dispatch window is confirmed at checkout."
+              : "Not open. No supplier-approved capacity, production ETA, dispatch date or returns setup has been established."}
+          </p>
+        </div>
+
+        {buy ? (
+          <>
+            <Link className="primary-cta" href={q(p.sizes[0] ?? "M")}>
+              PREORDER
+            </Link>
+            <AddToCart slug={p.slug} sizes={p.sizes} signedIn={signedIn} />
+          </>
+        ) : (
+          <>
+            <button className="disabled-cta" disabled type="button">
+              COMING SOON — NOT AVAILABLE FOR PURCHASE
+            </button>
+            <Link className="button-outline" href={q(p.sizes[0] ?? "M")}>
+              JOIN THE WAITLIST
+            </Link>
+          </>
+        )}
+
+        <div className="pdp-links">
+          <Link href="/inspiration" className="text-link">
+            EXPLORE THE VERSE LIBRARY
+          </Link>
+          <Link href="/size-chart" className="text-link">
+            SIZE CHART
+          </Link>
+          <Link href="/shop" className="text-link">
+            ← BACK TO COLLECTION
+          </Link>
+        </div>
+      </div>
     </div>
-  </div>;
+  );
 }

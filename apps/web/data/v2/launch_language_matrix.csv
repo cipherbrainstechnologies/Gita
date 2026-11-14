@@ -1,0 +1,19 @@
+locale,language,script,phase,review,notes
+sa,Sanskrit,Devanagari,P0,HUMAN_REQUIRED,Source integrity and transliteration
+en,English,Latin,P0,HUMAN_REQUIRED,Original editorial paraphrase
+hi,Hindi,Devanagari,P0,HUMAN_REQUIRED,Native speaker
+gu,Gujarati,Gujarati,P0,HUMAN_REQUIRED,Native speaker
+mr,Marathi,Devanagari,P1,HUMAN_REQUIRED,Native speaker
+bn,Bengali,Bengali,P1,HUMAN_REQUIRED,Native speaker
+ta,Tamil,Tamil,P1,HUMAN_REQUIRED,Native speaker
+te,Telugu,Telugu,P1,HUMAN_REQUIRED,Native speaker
+pa,Punjabi,Gurmukhi,P1,HUMAN_REQUIRED,Native speaker
+ml,Malayalam,Malayalam,P1,HUMAN_REQUIRED,Native speaker
+es,Spanish,Latin,P1,HUMAN_REQUIRED,Regional nuance
+fr,French,Latin,P1,HUMAN_REQUIRED,Regional nuance
+de,German,Latin,P2,HUMAN_REQUIRED,Regional nuance
+pt,Portuguese,Latin,P2,HUMAN_REQUIRED,BR/PT variants
+ja,Japanese,Japanese,P2,HUMAN_REQUIRED,Native typographic review
+ko,Korean,Hangul,P2,HUMAN_REQUIRED,Native typographic review
+ar,Arabic,Arabic RTL,P2,HUMAN_REQUIRED,Native RTL and line breaking
+zh-Hans,Chinese Simplified,CJK,P2,HUMAN_REQUIRED,Native typographic review

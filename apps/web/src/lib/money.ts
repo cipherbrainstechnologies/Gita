@@ -11,3 +11,15 @@ export function calculateCart(lines:Line[],shippingPaise:bigint){
  }
  return {subtotalPaise:subtotal,discountPaise:discount,taxPaise:tax,shippingPaise,totalPaise:subtotal-discount+tax+shippingPaise};
 }
+
+/** Parses a rupee string such as "1,299" or "999.50" into integer paise without floating point. Returns null when invalid. */
+export function inrToPaise(input:string):bigint|null{
+ const m=input.trim().replace(/,/g,'').match(/^(\d{1,9})(?:\.(\d{1,2}))?$/);
+ if(!m)return null;
+ return BigInt(m[1])*100n+BigInt((m[2]??'').padEnd(2,'0')||'0');
+}
+/** Formats integer paise (bigint or numeric string) as an INR label. Display only; never used for arithmetic. */
+export function formatInr(paise:bigint|string):string{
+ const v=BigInt(paise);const whole=v/100n,frac=v%100n;
+ return `₹${whole.toLocaleString('en-IN')}${frac?'.'+frac.toString().padStart(2,'0'):''}`;
+}

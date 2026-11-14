@@ -1,5 +1,5 @@
 import {afterEach, describe, expect, it} from "vitest";
-import {fromDb, getCatalogProducts, getProductBySlug, sampleConcepts} from "./catalog";
+import {fromDb, getCatalogProducts, getProductBySlug, isSaleable, sampleConcepts} from "./catalog";
 import {stage} from "./config";
 import {orderSchema, waitlistSchema} from "./checkout";
 
@@ -37,6 +37,15 @@ describe("catalog fallback", () => {
     expect(all.every(p => !p.orderable && p.status === "CONCEPT" && p.source === "sample")).toBe(true);
     expect((await getProductBySlug("less-proving"))?.name).toBe("Less Proving Relaxed Tee");
     expect(await getProductBySlug("nope")).toBeNull();
+  });
+  it("attaches editorial media for Quiet Power and Karma concepts", async () => {
+    delete process.env.DATABASE_URL;
+    const quiet = await getProductBySlug("quiet-is-a-power-move");
+    const karma = await getProductBySlug("karma-action-oversized-tee");
+    expect(quiet?.media?.length).toBeGreaterThanOrEqual(3);
+    expect(karma?.media?.some((m) => m.view === "front")).toBe(true);
+    expect(isSaleable(quiet!, false)).toBe(false);
+    expect(isSaleable(quiet!, true)).toBe(false);
   });
 });
 

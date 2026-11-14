@@ -15,3 +15,9 @@
 - [ ] New e-commerce 2026 amendment effective **2027-01-01** addressed ahead of go-live.
 
 Do not treat a green `npm run build` as commercial readiness.
+
+## V2 media gate note (2026-11-15)
+
+- [x] Quiet Power + Karma have multi-view simulated photography with disclosure watermark (not physical sample proof).
+- [ ] Simulated images replaced by photographed physical samples for every sellable SKU.
+- [ ] Tech pack + sample sign-off recorded before PREORDER.

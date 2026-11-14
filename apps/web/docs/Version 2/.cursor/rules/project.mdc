@@ -1,0 +1,6 @@
+---
+description: Core operating principles for AI-first preorder commerce
+globs: "**/*"
+alwaysApply: true
+---
+Read `START_HERE_CURSOR.md` and `docs/qa/GO_LIVE_GATES.md` first. Make features real and tested; do not fake provider connections, payment capture, inventory, model licensing or actual production. 1000 quote and design records are DRAFT ideation; only reviewed material can publish. Never reuse Souled Store copyrighted assets/policies. Sensitive integrations must be encrypted in Postgres using a Railway-only master key. Preserve idempotency and transaction boundaries; all writes authenticated/authorized. Update progress/test evidence and disclose blockers.

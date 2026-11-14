@@ -91,6 +91,19 @@ model AdminUser {
   updatedAt DateTime  @updatedAt
 }
 
+/// DEMO_AUTH-only password login. Never use as a production identity store for revenue traffic.
+model DemoCredential {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  kind         String
+  staffRole    StaffRole?
+  displayName  String?
+  active       Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
 model Customer {
   id                   String    @id @default(cuid())
   googleSubject        String?   @unique
@@ -497,10 +510,15 @@ model POSOrder {
 model NotificationOutbox {
   id             String    @id @default(cuid())
   recipientId    String
+  /// Delivery address for the channel (e.g. email). Nullable: legacy rows pre-date this column.
+  destination    String?
+  /// Order.publicId when the event relates to an order.
   orderId        String?
   eventType      String
   channel        String
   templateId     String
+  /// Non-secret template variables only.
+  payload        Json?
   consentPurpose String?
   status         String    @default("QUEUED")
   attempts       Int       @default(0)
@@ -614,3 +632,125 @@ model WaitlistLead {
   @@unique([email, productSlug])
   @@index([productSlug, createdAt])
 }
+
+/// Lightweight DB-backed cart. Holds intent only: no price, no reservation, no stock. Prices/availability are re-resolved server-side at checkout.
+model CartItem {
+  id          String   @id @default(cuid())
+  customerId  String
+  productSlug String
+  size        String
+  quantity    Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([customerId, productSlug, size])
+  @@index([customerId, updatedAt])
+}
+
+
+// V2: scripture provenance, multilingual approvals, rights control and photo proof gate.
+// Create and apply a reviewed Prisma migration before any production rollout.
+model ContentSource {
+  id                 String   @id @default(cuid())
+  sourceKey          String   @unique
+  title              String
+  category           String   // SCRIPTURE, HISTORICAL_PD, ORIGINAL, LICENSED_MEDIA
+  authoritativeUrl   String?
+  rightsEvidenceUrl  String?
+  rightsStatus       String   @default("REVIEW_REQUIRED")
+  licensedUntil      DateTime?
+  reviewerId         String?
+  reviewedAt         DateTime?
+  createdAt          DateTime @default(now())
+  @@index([category, rightsStatus])
+}
+
+model ContentPassage {
+  id                 String   @id @default(cuid())
+  sourceId           String
+  passageKey         String   @unique
+  chapterVerse       String?
+  originalLanguage   String
+  originalScript     String
+  originalText       String   @db.Text
+  textHash           String   @unique
+  sourceVerification String   @default("UNVERIFIED")
+  similarityVectorId String?
+  publicationStatus  String   @default("DRAFT")
+  createdAt          DateTime @default(now())
+  @@index([sourceId, publicationStatus])
+}
+
+model ContentLocalization {
+  id                  String   @id @default(cuid())
+  passageId           String
+  locale              String
+  translatedText      String   @db.Text
+  revision            Int      @default(1)
+  format              String   // LITERAL_TRANSLATION, EXPLANATORY_PARAPHRASE, ORIGINAL_EDITORIAL
+  sourceTranslator    String?
+  rightsStatus        String   @default("REVIEW_REQUIRED")
+  linguisticStatus    String   @default("NEEDS_NATIVE_REVIEW")
+  culturalStatus      String   @default("NEEDS_CULTURAL_REVIEW")
+  approvedBy          String?
+  approvedAt          DateTime?
+  createdAt           DateTime @default(now())
+  @@unique([passageId,locale,format,revision])
+  @@index([linguisticStatus,culturalStatus])
+}
+
+model ApparelTechPack {
+  id                  String   @id @default(cuid())
+  productId           String
+  version             Int
+  manufacturerId      String?
+  fit                 String
+  fabricComposition   String?
+  fabricGsm           Int?
+  knittingType        String?
+  finish              String?
+  colourfastnessGrade String?
+  washShrinkagePct    Decimal? @db.Decimal(5,2)
+  measurementSpec     Json?
+  printTechnique      String?
+  printAreaMm         Json?
+  artAssetHash        String?
+  washCare            Json?
+  sampleSignoffAt     DateTime?
+  signedOffBy         String?
+  createdAt           DateTime @default(now())
+  @@unique([productId,version])
+}
+
+model ProductMediaV2 {
+  id                     String   @id @default(cuid())
+  productId              String
+  designVersionId        String?
+  mediaRole              String   // FRONT, BACK, SIDE, PRINT_CLOSEUP, FABRIC, ON_MODEL, LIFESTYLE
+  fileUrl                String
+  origin                 String   // AI_SIMULATION, PHOTOGRAPHED_SAMPLE
+  assetSha256            String
+  artworkRevision        Int?
+  visualReviewedBy       String?
+  visualReviewedAt       DateTime?
+  verifiedAgainstSample  Boolean  @default(false)
+  approvedForPublication Boolean  @default(false)
+  createdAt              DateTime @default(now())
+  @@unique([productId,mediaRole,assetSha256])
+  @@index([productId,approvedForPublication])
+}
+
+model ContentApprovalAudit {
+  id           String   @id @default(cuid())
+  passageId    String?
+  productId    String?
+  designId     String?
+  stage        String
+  actorId      String
+  outcome      String
+  note         String?  @db.Text
+  evidenceHash String?
+  createdAt    DateTime @default(now())
+  @@index([productId,createdAt])
+}
+

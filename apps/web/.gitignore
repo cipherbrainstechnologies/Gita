@@ -12,3 +12,17 @@ test-results/
 .DS_Store
 private/
 *.sqlite
+
+# V2 ZIP nested scaffold (merged into live app; keep docs/data only if needed)
+docs/Version 2/src/
+docs/Version 2/prisma/
+docs/Version 2/scripts/
+docs/Version 2/public/
+docs/Version 2/node_modules/
+docs/Version 2/.next/
+docs/Version 2/package.json
+docs/Version 2/package-lock.json
+docs/Version 2/tsconfig.json
+docs/Version 2/next.config.ts
+docs/Version 2/eslint.config.mjs
+docs/Version 2/next-env.d.ts
