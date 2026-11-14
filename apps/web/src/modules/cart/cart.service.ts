@@ -1,5 +1,5 @@
 import {z} from "zod";
-import {getCatalogProducts, getProductBySlug} from "@/lib/catalog";
+import {getProductBySlug} from "@/lib/catalog";
 import {checkoutEnabled} from "@/lib/config";
 import {slugRe} from "@/lib/checkout";
 import * as repo from "./cart.repository";
@@ -24,10 +24,9 @@ export async function getCart(email: string): Promise<CartView> {
   const customerId = await repo.findCustomerId(email);
   const items = customerId ? await repo.listItems(customerId) : [];
   if (!items.length) return {lines: [], subtotalPaise: "0", availableCount: 0};
-  const catalog = await getCatalogProducts();
   let subtotal = 0n, availableCount = 0;
-  const lines = items.map((i): CartLine => {
-    const p = catalog.find(x => x.slug === i.productSlug);
+  const lines = await Promise.all(items.map(async (i): Promise<CartLine> => {
+    const p = await getProductBySlug(i.productSlug);
     const v = p?.variants.find(x => x.size === i.size && x.enabled);
     const ok = Boolean(p?.orderable && v && checkoutEnabled());
     if (ok && v) { subtotal += BigInt(v.pricePaise) * BigInt(i.quantity); availableCount++; }
@@ -36,7 +35,7 @@ export async function getCart(email: string): Promise<CartView> {
       unitPaise: ok && v ? v.pricePaise : null, linePaise: ok && v ? (BigInt(v.pricePaise) * BigInt(i.quantity)).toString() : null,
       available: ok, reason: ok ? undefined : "No longer open for preorder in this size."
     };
-  });
+  }));
   return {lines, subtotalPaise: subtotal.toString(), availableCount};
 }
 

@@ -41,7 +41,18 @@
 - Shiprocket + DLT WhatsApp/SMS
 - Disable `DEMO_AUTH` before real customers
 
+## 1,000 catalog + deposit patch (cursor/1000-catalog-preorder-133f)
+
+| Check | Result |
+|-------|--------|
+| `npm run verify:data` | 1,000 briefs + 1,000 verse drafts (local CSV) |
+| `npm run typecheck` / `npm run test` | Run on branch after `prisma generate` |
+| `npm run db:seed:1000-concepts` | Idempotent import to `Product` + 6 variants each (requires `DATABASE_URL` + migration `20251115040000_1000_concept_deposit`) |
+| `npm run audit:1000-catalog -- --catalog-only` | Count proof after seed |
+| Paginated `/shop` + `GET /api/products?page&limit` | 30–36 cards/page, filters for theme/audience/search |
+| Deposit staging | `DepositPolicy` + `chargeDuePaise` / `intentType=DEPOSIT`; webhook sets `DEPOSIT_PAID` not `PAID` |
+
 ## Conclusion
 
-**NO-GO FOR LIVE CUSTOMERS** (real-money checkout).  
-**GO for staging/demo browsing** with labelled AI simulations and waitlist.
+**NO-GO FOR LIVE CUSTOMERS** (real-money checkout or deposit).  
+**GO for staging/demo browsing** of concept archive once seed is applied; **GO for engineering verification** of pagination and deposit math in sandbox when credentials exist.

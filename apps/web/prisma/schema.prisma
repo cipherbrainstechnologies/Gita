@@ -47,7 +47,10 @@ enum ProductStatus {
 
 enum OrderStatus {
   DRAFT
+  RESERVATION_PENDING
   PAYMENT_PENDING
+  DEPOSIT_PAID
+  BALANCE_PENDING
   PAID
   VENDOR_CONFIRMED
   IN_PRODUCTION
@@ -60,6 +63,12 @@ enum OrderStatus {
   REFUND_PENDING
   REFUNDED
   EXCEPTION
+}
+
+enum PaymentIntentType {
+  DEPOSIT
+  BALANCE
+  FULL
 }
 
 enum PaymentStatus {
@@ -217,32 +226,43 @@ model MediaAsset {
 }
 
 model Product {
-  id                String           @id @default(cuid())
-  slug              String           @unique
-  title             String
-  description       String?          @db.Text
-  collection        String?
-  tagline           String?
-  palette           String?
-  category          String
-  audienceFit       String
-  designVersionId   String?
-  supplierId        String?
-  status            ProductStatus    @default(CONCEPT)
-  images            Json?
-  fabricComposition String?
-  gsm               Int?
-  countryOfOrigin   String?
-  hsnCode           String?
-  disclosure        String?
-  sampleApprovedAt  DateTime?
-  approvedBy        String?
-  variants          ProductVariant[]
-  publishedAt       DateTime?
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  id                     String           @id @default(cuid())
+  slug                   String           @unique
+  title                  String
+  description            String?          @db.Text
+  collection             String?
+  tagline                String?
+  palette                String?
+  category               String
+  audienceFit            String
+  designVersionId        String?
+  supplierId             String?
+  status                 ProductStatus    @default(CONCEPT)
+  images                 Json?
+  fabricComposition      String?
+  gsm                    Int?
+  countryOfOrigin        String?
+  hsnCode                String?
+  disclosure             String?
+  sampleApprovedAt       DateTime?
+  approvedBy             String?
+  /// Links a concept SKU to `DesignBrief.fingerprint` from the 1,000 brief CSV seed.
+  designBriefFingerprint String?          @unique
+  quoteFingerprint       String?
+  theme                  String?
+  language               String?          @default("en")
+  garmentFamily          String?
+  placement              String?
+  artFamily              String?
+  conceptMeta            Json?
+  variants               ProductVariant[]
+  publishedAt            DateTime?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
 
   @@index([status, category])
+  @@index([theme, category])
+  @@index([quoteFingerprint])
 }
 
 model ProductVariant {
@@ -304,6 +324,17 @@ model PreorderCapacity {
   @@unique([variantId, supplierId])
 }
 
+model DepositPolicy {
+  id                   String   @id @default("default")
+  enabled              Boolean  @default(false)
+  flatDepositPaise     BigInt   @default(9900)
+  maxDepositPercentBps Int      @default(2500)
+  pauseDepositCheckout Boolean  @default(true)
+  balanceDueDays       Int      @default(30)
+  updatedAt            DateTime @updatedAt
+  updatedBy            String?
+}
+
 model Order {
   id                  String      @id @default(cuid())
   publicId            String      @unique
@@ -315,13 +346,19 @@ model Order {
   discountPaise       BigInt      @default(0)
   shippingPaise       BigInt      @default(0)
   taxPaise            BigInt
+  /// Full selling price (tax-inclusive merchandise total before payment staging).
   totalPaise          BigInt
+  /// Amount charged in the current Razorpay order (deposit or full).
+  chargeDuePaise      BigInt      @default(0)
+  depositDuePaise     BigInt      @default(0)
+  balanceDuePaise     BigInt      @default(0)
   addressEncrypted    String      @db.Text
   legalSellerSnapshot Json
   shippingPromise     Json
   acceptedPolicy      Json
   auditTrace          Json?
   paidAt              DateTime?
+  depositPaidAt       DateTime?
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
 
@@ -346,17 +383,18 @@ model OrderLine {
 }
 
 model Payment {
-  id                String        @id @default(cuid())
+  id                String            @id @default(cuid())
   orderId           String
   provider          String
-  providerOrderId   String?       @unique
-  providerPaymentId String?       @unique
-  status            PaymentStatus @default(CREATED)
+  providerOrderId   String?           @unique
+  providerPaymentId String?           @unique
+  status            PaymentStatus     @default(CREATED)
+  intentType        PaymentIntentType @default(FULL)
   amountPaise       BigInt
-  currency          String        @default("INR")
+  currency          String            @default("INR")
   capturedAt        DateTime?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
   @@index([orderId, status])
 }
