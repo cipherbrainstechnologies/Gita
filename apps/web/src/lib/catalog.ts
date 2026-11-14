@@ -5,6 +5,7 @@ export type ConceptMedia = {
   src: string;
   view: "front" | "back" | "side" | "combined" | "detail" | "lifestyle" | "on-model" | "print-proof";
   alt: string;
+  /** Legacy field: true when imagery is generated, not a supplier photo sample. */
   simulated: true;
 };
 
@@ -276,6 +277,25 @@ export function fromSample(d: DemoProduct): CatalogProduct {
 }
 
 type DbRow = Prisma.ProductGetPayload<{include: {variants: true}}>;
+
+function coverFromProductImages(images: unknown): ConceptMedia[] | undefined {
+  if (!Array.isArray(images)) return undefined;
+  const out: ConceptMedia[] = [];
+  for (const x of images) {
+    if (!x || typeof x !== "object") continue;
+    const row = x as Record<string, unknown>;
+    const src = typeof row.src === "string" ? row.src : "";
+    if (!src) continue;
+    out.push({
+      src,
+      view: (typeof row.view === "string" ? row.view : "front") as ConceptMedia["view"],
+      alt: typeof row.alt === "string" ? row.alt : "Product preview",
+      simulated: true,
+    });
+  }
+  return out.length ? out : undefined;
+}
+
 export function fromDb(r: DbRow, media?: ConceptMedia[]): CatalogProduct {
   const orderable = r.status === "PREORDER" && r.variants.some((v) => v.enabled);
   const shown = orderable ? r.variants.filter((v) => v.enabled) : r.variants;
@@ -304,7 +324,7 @@ export function fromDb(r: DbRow, media?: ConceptMedia[]): CatalogProduct {
       pricePaise: v.pricePaise.toString(),
       enabled: v.enabled,
     })),
-    media: media?.length ? media : ed?.media,
+    media: media?.length ? media : coverFromProductImages(r.images) ?? ed?.media,
     verseReference: ed?.verseReference,
     sourceUrl: ed?.sourceUrl,
     designExplanation: ed?.designExplanation ?? r.description ?? undefined,

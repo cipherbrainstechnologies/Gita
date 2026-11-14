@@ -4,8 +4,8 @@ import type {Db} from "../shared/audit";
 export const productWithVariants = {variants: {orderBy: {sku: "asc"}}} satisfies Prisma.ProductInclude;
 export type ProductRow = Prisma.ProductGetPayload<{include: typeof productWithVariants}>;
 
-export const listProducts = (db: Db): Promise<ProductRow[]> =>
-  db.product.findMany({include: productWithVariants, orderBy: [{status: "asc"}, {createdAt: "asc"}], take: 500});
+export const listProducts = (db: Db, take = 1200): Promise<ProductRow[]> =>
+  db.product.findMany({include: productWithVariants, orderBy: [{status: "asc"}, {createdAt: "asc"}], take});
 
 export const findProduct = (db: Db, id: string) => db.product.findUnique({where: {id}});
 export const findProductWithVariants = (db: Db, id: string) => db.product.findUnique({where: {id}, include: productWithVariants});

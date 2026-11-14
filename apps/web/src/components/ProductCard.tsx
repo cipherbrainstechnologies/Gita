@@ -3,12 +3,14 @@ import Image from "next/image";
 import type {CatalogProduct} from "@/lib/catalog";
 
 export function ProductCard({product}: {product: CatalogProduct}) {
+  const cover = product.media?.find((m) => m.view === "front") ?? product.media?.[0];
   const chip = product.orderable
     ? "PREORDER"
     : product.status === "CONCEPT"
-      ? "DIGITAL CONCEPT"
+      ? cover
+        ? "MODEL PREVIEW"
+        : "CONCEPT"
       : product.status.replace(/_/g, " ");
-  const cover = product.media?.find((m) => m.view === "front") ?? product.media?.[0];
 
   return (
     <Link href={`/shop/${product.slug}`} className="product-card">

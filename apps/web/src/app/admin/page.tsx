@@ -26,6 +26,14 @@ export default async function Admin(){
     <Link href="/admin/orders" className="admin-stat"><b>{d.orders.awaitingVendorConfirmation}</b><span>paid orders awaiting vendor confirmation</span></Link>
     <Link href="/admin/orders" className="admin-stat"><b>{d.orders.refundPending}</b><span>refund requests pending</span></Link>
    </div>
+   <h2 className="admin-h2">Catalog pipeline</h2>
+   <div className="admin-stats">
+    <Link href="/admin/catalog" className="admin-stat"><b>{d.catalog.conceptSkus}</b><span>concept SKUs (importer)</span></Link>
+    <Link href="/admin/catalog" className="admin-stat"><b>{d.catalog.modelFrontApproved}</b><span>front model previews approved</span></Link>
+    <Link href="/admin/catalog" className="admin-stat"><b>{d.catalog.modelBackApproved}</b><span>back model previews approved</span></Link>
+    <Link href="/admin/catalog" className="admin-stat"><b>{d.catalog.preorderEligibleVariants}</b><span>enabled preorder variants</span></Link>
+    <span className="admin-stat"><b>{d.depositPolicy?.flatDepositInr ?? 99}</b><span>deposit (INR) · {d.depositPolicy?.enabled ? (d.depositPolicy.pauseCheckout ? 'configured, paused' : 'enabled') : 'disabled at gateway'}</span></span>
+   </div>
    <h2 className="admin-h2">Products by status</h2>
    <div className="admin-stats">{PRODUCT_STATUS_ORDER.map(s=><Link key={s} href="/admin/catalog" className="admin-stat"><b>{d.products[s]}</b><span><StatusChip status={s}/></span></Link>)}</div>
   </>}

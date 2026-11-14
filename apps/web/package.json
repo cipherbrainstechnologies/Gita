@@ -22,6 +22,7 @@
     "db:seed:catalog": "tsx scripts/seed-catalog.ts",
     "db:seed:1000-concepts": "tsx scripts/seed-1000-product-concepts.ts",
     "audit:1000-catalog": "tsx scripts/audit-1000-catalog.ts",
+    "db:attach:concept-gallery": "tsx scripts/attach-concept-model-gallery.ts",
     "db:seed:demo": "tsx scripts/seed-demo.ts",
     "db:seed:v2-content": "tsx scripts/seed-v2-content.ts",
     "verify:v2": "python scripts/verify_v2.py",
@@ -43,6 +44,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
+    "@railway/cli": "^5.74.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.18.0",
     "@types/react": "^19.1.0",

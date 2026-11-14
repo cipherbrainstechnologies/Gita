@@ -10,7 +10,8 @@ node_modules
 coverage
 tsconfig.tsbuildinfo
 docs
-# Keep data/v2 JSON used by inspiration library at build time; ignore large ideation CSVs if present elsewhere.
+# Keep data/v2 JSON used by inspiration library at build time.
+# 1,000-brief CSVs are required in the image for idempotent concept seed (runtime/SSH).
 data/*.csv
-data/verses_1000_drafts.csv
-data/design_briefs_1000.csv
+!data/design_briefs_1000.csv
+!data/verses_1000_drafts.csv
