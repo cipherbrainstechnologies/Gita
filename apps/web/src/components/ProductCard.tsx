@@ -4,11 +4,16 @@ import type {CatalogProduct} from "@/lib/catalog";
 
 export function ProductCard({product}: {product: CatalogProduct}) {
   const cover = product.media?.find((m) => m.view === "front") ?? product.media?.[0];
+  const isTypographic =
+    cover?.src.includes("/api/catalog/visual/") ||
+    (cover as {origin?: string} | undefined)?.origin === "TYPOGRAPHIC_PREVIEW";
   const chip = product.orderable
     ? "PREORDER"
     : product.status === "CONCEPT"
       ? cover
-        ? "MODEL PREVIEW"
+        ? isTypographic
+          ? "DESIGN PREVIEW"
+          : "MODEL PREVIEW"
         : "CONCEPT"
       : product.status.replace(/_/g, " ");
 
@@ -23,6 +28,7 @@ export function ProductCard({product}: {product: CatalogProduct}) {
             fill
             sizes="(max-width: 700px) 50vw, 25vw"
             className="product-photo"
+            unoptimized={cover.src.endsWith(".svg") || cover.src.includes("/api/catalog/visual/")}
           />
         ) : (
           <div className="photo-pending">

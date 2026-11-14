@@ -379,7 +379,9 @@ export async function queryCatalogPage(input: CatalogQueryInput = {}): Promise<C
       ]),
       4000,
     );
-    const items = rows.map((r) => fromDb(r));
+    const {loadStorefrontMediaForProducts} = await import("./catalog-media");
+    const mediaByProduct = await loadStorefrontMediaForProducts(rows.map((r) => r.id));
+    const items = rows.map((r) => fromDb(r, mediaByProduct.get(r.id)));
     return {items, total, page, pageSize, orderableOnPage: items.filter((p) => p.orderable).length};
   } catch {
     return null;
