@@ -10,4 +10,7 @@ node_modules
 coverage
 tsconfig.tsbuildinfo
 docs
-data
+# Keep data/v2 JSON used by inspiration library at build time; ignore large ideation CSVs if present elsewhere.
+data/*.csv
+data/verses_1000_drafts.csv
+data/design_briefs_1000.csv
