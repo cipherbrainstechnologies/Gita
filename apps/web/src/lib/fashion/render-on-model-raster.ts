@@ -3,29 +3,43 @@ import {readFile} from "node:fs/promises";
 import {join} from "node:path";
 import sharp from "sharp";
 import type {DesignDna} from "./design-dna";
-import {getModelIdentity} from "./model-identities";
 import {renderArtworkPng} from "./artwork-raster";
+import {recolourGarment} from "./fabric-recolor";
+import {FRAME, garmentMaskSvg, printBox} from "./garment-placements";
+import {getModelIdentity} from "./model-identities";
 
 export type OnModelView = "front" | "back" | "detail" | "lifestyle";
+
+export const RENDERER_VERSION = "cpu-garment-mask-v2";
 
 function publicPath(urlPath: string, cwd = process.cwd()): string {
   const rel = urlPath.replace(/^\//, "");
   return join(cwd, "public", rel);
 }
 
-function hexToRgb(hex: string): {r: number; g: number; b: number} {
-  const h = hex.replace("#", "");
-  const n = parseInt(h.length === 3 ? h.split("").map((c) => c + c).join("") : h, 16);
-  return {r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255};
+async function maskBuffer(dna: DesignDna, view: OnModelView): Promise<Buffer> {
+  const svg =
+    view === "detail"
+      ? garmentMaskSvg(dna, "front")
+      : view === "lifestyle"
+        ? garmentMaskSvg(dna, "front")
+        : garmentMaskSvg(dna, view);
+  return sharp(Buffer.from(svg)).resize(FRAME.width, FRAME.height).png().toBuffer();
 }
 
-/** Per-SKU raster on-model frame: licensed photo + colour-grade + deterministic print overlay. */
+/** Free CPU compositor — garment-masked recolour + deterministic print; not GPU VTON. */
 export async function renderOnModelRaster(
   dna: DesignDna,
   view: OnModelView,
-): Promise<{bytes: Buffer; sha256: string; mimeType: "image/webp"; modelIdentityId: string}> {
+): Promise<{
+  bytes: Buffer;
+  sha256: string;
+  mimeType: "image/webp";
+  modelIdentityId: string;
+  rendererVersion: string;
+}> {
   const model = getModelIdentity(dna.modelIdentityId);
-  const flip = dna.renderSeed % 3 === 0;
+  const flip = dna.renderSeed % 5 === 0;
   const asset =
     view === "back"
       ? model.backAsset
@@ -36,40 +50,60 @@ export async function renderOnModelRaster(
           : model.frontAsset;
 
   const basePath = publicPath(asset);
-  let base = sharp(await readFile(basePath)).rotate().resize(1080, 1440, {fit: "cover", position: "centre"});
-  if (flip) base = base.flop();
-  const rgb = hexToRgb(dna.colourHex);
-  const grade = await base
+  let photo = sharp(await readFile(basePath)).rotate().resize(FRAME.width, FRAME.height, {
+    fit: "cover",
+    position: "centre",
+  });
+  if (flip) photo = photo.flop();
+
+  const photoBuf = await photo
     .modulate({
-      brightness: 0.92 + (dna.renderSeed % 7) * 0.02,
-      saturation: 0.85 + (dna.renderSeed % 5) * 0.05,
-      hue: (dna.renderSeed % 24) - 12,
+      brightness: 0.96 + (dna.renderSeed % 4) * 0.01,
+      saturation: 1.02,
     })
     .ensureAlpha()
     .toBuffer();
 
-  const overlaySvg = `
-<svg width="1080" height="1440">
-  <rect x="200" y="${view === "back" ? "280" : "320"}" width="680" height="720" rx="40"
-    fill="rgba(${rgb.r},${rgb.g},${rgb.b},0.38)"/>
-</svg>`;
+  const mask = await maskBuffer(dna, view);
+  const recoloured = await recolourGarment(photoBuf, mask, dna.colourHex, dna.garmentFamily === "PANTS" ? 0.5 : 0.62);
 
-  let pipeline = sharp(grade).composite([{input: Buffer.from(overlaySvg), blend: "multiply"}]);
+  const shadowSvg = `<svg width="${FRAME.width}" height="${FRAME.height}">
+    <ellipse cx="${FRAME.width / 2}" cy="${FRAME.height - 80}" rx="340" ry="36" fill="rgba(0,0,0,0.12)"/>
+  </svg>`;
+
+  let composed = await sharp(recoloured)
+    .composite([{input: Buffer.from(shadowSvg), blend: "multiply"}])
+    .toBuffer();
 
   if (view === "front" || view === "back") {
     const art = await renderArtworkPng(dna);
-    const artResized = await sharp(art.bytes).resize(520, 520, {fit: "inside"}).png().toBuffer();
-    const top = view === "back" ? 360 : 400;
-    pipeline = sharp(await pipeline.toBuffer()).composite([
-      {input: artResized, top, left: Math.floor((1080 - 520) / 2), blend: "over"},
-    ]);
+    const box = printBox(dna, view);
+    if (box) {
+      const artSized = await sharp(art.bytes)
+        .resize(box.width, box.height, {fit: "inside"})
+        .png()
+        .toBuffer();
+      composed = await sharp(composed)
+        .composite([{input: artSized, left: box.left, top: box.top, blend: "over"}])
+        .toBuffer();
+    }
   }
 
-  const bytes = await pipeline.webp({quality: 88, effort: 4}).toBuffer();
+  const bytes = await sharp(composed).webp({quality: 90, effort: 4}).toBuffer();
   const sha256 = createHash("sha256").update(bytes).digest("hex");
-  return {bytes, sha256, mimeType: "image/webp", modelIdentityId: model.id};
+  return {
+    bytes,
+    sha256,
+    mimeType: "image/webp",
+    modelIdentityId: model.id,
+    rendererVersion: RENDERER_VERSION,
+  };
 }
 
 export function onModelApiPath(slug: string, view: OnModelView): string {
   return `/api/catalog/on-model/${encodeURIComponent(slug)}/${view}`;
+}
+
+export function staticOnModelPath(storageKey: string): string {
+  return `/api/assets/generated/${storageKey}`;
 }

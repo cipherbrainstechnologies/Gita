@@ -6,7 +6,8 @@ export function ProductCard({product}: {product: CatalogProduct}) {
   const cover = product.media?.find((m) => m.view === "front") ?? product.media?.[0];
   const isOnModelRaster =
     cover?.src.includes("/api/catalog/on-model/") ||
-    (cover as {origin?: string} | undefined)?.origin === "ON_MODEL_RASTER";
+    cover?.src.includes("/api/assets/generated/") ||
+    (cover as {origin?: string} | undefined)?.origin === "CPU_COMPOSITE_PREVIEW";
   const chip = product.orderable
     ? "PREORDER"
     : product.displaySaleReady && cover
