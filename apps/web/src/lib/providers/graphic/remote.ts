@@ -10,7 +10,7 @@ import {fail,ok,type GraphicKind,type GraphicOutput,type Result} from '../types'
 export interface RemoteEndpoint{baseUrl:string;token?:string;source:'env'|'vault'}
 export interface RemoteConfig{endpoint:RemoteEndpoint;allowedHosts:string[];nodeEnv?:string;fetchImpl?:typeof fetch;lookup?:LookupFn;timeoutMs?:number;maxAttempts?:number;sleep?:(ms:number)=>Promise<void>}
 const MAX_BODY=25_000_000;
-const imageResponse=z.object({imageBase64:z.string().min(8),mimeType:z.enum(['image/png','image/jpeg','image/webp']),modelName:z.string().min(1).max(200),modelVersion:z.string().min(1).max(100),modelLicense:z.string().min(1).max(200),outputLicense:z.string().min(1).max(200),requestId:z.string().max(200).optional(),costInr:z.number().nonnegative().optional()});
+const imageResponse=z.object({imageBase64:z.string().min(8),mimeType:z.enum(['image/png','image/jpeg','image/webp']),modelName:z.string().min(1).max(200),modelVersion:z.string().min(1).max(100),modelLicense:z.string().min(1).max(200),outputLicense:z.string().min(1).max(200),requestId:z.string().max(200).optional(),costInr:z.number().nonnegative().optional(),isSimulation:z.boolean().optional(),notice:z.string().max(500).optional()});
 function magicOk(b:Buffer,mime:string){
  if(mime==='image/png')return b.length>8&&b.subarray(0,4).equals(Buffer.from([0x89,0x50,0x4e,0x47]));
  if(mime==='image/jpeg')return b.length>3&&b[0]===0xff&&b[1]===0xd8&&b[2]===0xff;
@@ -40,7 +40,9 @@ export async function postImage(provider:string,cfg:RemoteConfig,path:string,bod
   const parsed=imageResponse.safeParse(json);if(!parsed.success)return fail(provider,'INVALID_RESPONSE','Remote response missing required fields (image, model and licence provenance)');
   const d=parsed.data;const bytes=Buffer.from(d.imageBase64,'base64');
   if(!magicOk(bytes,d.mimeType))return fail(provider,'INVALID_RESPONSE','Remote image bytes do not match declared MIME type');
-  return ok({kind:meta.kind,bytes,mimeType:d.mimeType,sha256:createHash('sha256').update(bytes).digest('hex'),isSimulation:meta.kind==='LIFESTYLE_SIMULATION',provenance:{provider,mode:'REMOTE',kind:meta.kind,isSimulation:meta.kind==='LIFESTYLE_SIMULATION',seed:meta.seed,idempotencyKey:meta.idempotencyKey,modelName:d.modelName,modelVersion:d.modelVersion,modelLicense:d.modelLicense,outputLicense:d.outputLicense,promptVersion:meta.promptVersion,requestId:d.requestId,costInr:d.costInr}});
+  // Trust the GPU service's simulation flag; lifestyle try-on is always simulation even if omitted.
+  const isSimulation=d.isSimulation===true||meta.kind==='LIFESTYLE_SIMULATION'||d.modelName==='verse-sandbox-placeholder';
+  return ok({kind:meta.kind,bytes,mimeType:d.mimeType,sha256:createHash('sha256').update(bytes).digest('hex'),isSimulation,provenance:{provider,mode:'REMOTE',kind:meta.kind,isSimulation,seed:meta.seed,idempotencyKey:meta.idempotencyKey,modelName:d.modelName,modelVersion:d.modelVersion,modelLicense:d.modelLicense,outputLicense:d.outputLicense,promptVersion:meta.promptVersion,requestId:d.requestId,costInr:d.costInr,notice:d.notice}});
  }
  return last;
 }
