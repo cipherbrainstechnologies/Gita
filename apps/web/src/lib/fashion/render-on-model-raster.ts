@@ -14,7 +14,7 @@ import type {OnModelView} from "./on-model-types";
 export type {OnModelView};
 
 /** Bump forces batch re-render of previously published bad composites. */
-export const RENDERER_VERSION = "cpu-garment-truth-v3";
+export const RENDERER_VERSION = "cpu-garment-truth-v4";
 
 function publicPath(urlPath: string, cwd = process.cwd()): string {
   const rel = urlPath.replace(/^\//, "");

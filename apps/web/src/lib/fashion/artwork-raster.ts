@@ -1,6 +1,7 @@
 import {createHash} from "node:crypto";
 import sharp from "sharp";
 import type {DesignDna} from "./design-dna";
+import {CATALOG_FONT, svgFontFaceCss} from "./svg-font";
 
 function escapeSvg(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -38,7 +39,8 @@ export async function renderArtworkPng(dna: DesignDna): Promise<{bytes: Buffer; 
   const ink = dna.accentHex;
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
-  <text text-anchor="middle" x="400" y="340" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-weight="700" fill="${ink}" stroke="rgba(0,0,0,0.35)" stroke-width="2" paint-order="stroke">${tspans}</text>
+  <defs><style type="text/css"><![CDATA[${svgFontFaceCss()}]]></style></defs>
+  <text text-anchor="middle" x="400" y="340" font-family="${CATALOG_FONT}" font-size="34" font-weight="700" fill="${ink}" stroke="rgba(0,0,0,0.35)" stroke-width="2" paint-order="stroke">${tspans}</text>
 </svg>`;
   const bytes = await sharp(Buffer.from(svg))
     .ensureAlpha()

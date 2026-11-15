@@ -4,6 +4,7 @@ import type {DesignDna} from "./design-dna";
 import {renderArtworkPng} from "./artwork-raster";
 import {FRAME, printBox} from "./garment-placements";
 import type {OnModelView} from "./on-model-types";
+import {CATALOG_FONT, svgFontFaceCss} from "./svg-font";
 
 /**
  * Waist-to-ankle track-pant flat-lay preview.
@@ -29,7 +30,6 @@ export async function renderPantsFlatlay(
   const innerGap = wide ? 38 : 28;
   const ankleW = cuff ? 95 : wide ? 130 : 110;
 
-  // Continuous outline: left outer → left ankle → crotch rise → right ankle → right outer → waist
   const garment = `
     M ${outer} ${waistTop}
     L ${W - outer} ${waistTop}
@@ -73,6 +73,7 @@ export async function renderPantsFlatlay(
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
+    <style type="text/css"><![CDATA[${svgFontFaceCss()}]]></style>
     <linearGradient id="pantShade" x1="0.15" y1="0" x2="0.9" y2="1">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
       <stop offset="35%" stop-color="${fabric}" stop-opacity="1"/>
@@ -83,8 +84,8 @@ export async function renderPantsFlatlay(
     </filter>
   </defs>
   <rect width="100%" height="100%" fill="hsl(${bgHue} 24% 94%)"/>
-  <text x="48" y="64" font-family="system-ui,sans-serif" font-size="18" font-weight="700" fill="#1a1a1a">${escapeXml(dna.conceptId)}</text>
-  <text x="48" y="92" font-family="system-ui,sans-serif" font-size="14" fill="#60635d">${escapeXml(dna.garmentCut)} · ${escapeXml(dna.colourwayId)} · ${label}</text>
+  <text x="48" y="64" font-family="${CATALOG_FONT}" font-size="20" font-weight="700" fill="#1a1a1a">${escapeXml(dna.conceptId)}</text>
+  <text x="48" y="94" font-family="${CATALOG_FONT}" font-size="15" fill="#60635d">${escapeXml(dna.garmentCut)} · ${escapeXml(dna.colourwayId)} · ${label}</text>
   <g filter="url(#softShadow)">
     <path d="${garment}" fill="url(#pantShade)" stroke="#111" stroke-opacity="0.22" stroke-width="2"/>
     <path d="${waistband}" fill="${fabric}" stroke="#111" stroke-opacity="0.18" stroke-width="1.5" opacity="0.95"/>
@@ -94,7 +95,7 @@ export async function renderPantsFlatlay(
   <path d="M ${outer + 50} ${waistBot + 30} Q ${outer + 90} ${rise - 40} ${outer + 70} ${rise + 20}" fill="none" stroke="#000" stroke-opacity="0.12" stroke-width="3"/>
   <path d="M ${W - outer - 50} ${waistBot + 30} Q ${W - outer - 90} ${rise - 40} ${W - outer - 70} ${rise + 20}" fill="none" stroke="#000" stroke-opacity="0.12" stroke-width="3"/>
   ${stripeLeft}${stripeRight}${cuffLeft}${cuffRight}
-  <text x="${W - 48}" y="${H - 36}" text-anchor="end" font-size="13" fill="#64748b">Digital garment preview · track pant flat-lay · not a factory sample</text>
+  <text x="${W - 48}" y="${H - 36}" text-anchor="end" font-family="${CATALOG_FONT}" font-size="14" fill="#64748b">Digital garment preview · track pant flat-lay · not a factory sample</text>
 </svg>`;
 
   let composed = await sharp(Buffer.from(svg)).png().toBuffer();

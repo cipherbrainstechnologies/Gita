@@ -1,5 +1,5 @@
 {
-  "rendererVersion": "cpu-garment-truth-v3",
+  "rendererVersion": "cpu-garment-truth-v4",
   "sourceLibrary": {
     "assignmentSlots": 24,
     "distinctHumanSourcePhotos": 6,
@@ -16,7 +16,7 @@
       "visualKind": "PANTS_FLATLAY_PREVIEW",
       "colourwayId": "teal",
       "colourHex": "#0f766e",
-      "sha256": "622f20e42e35c9fb2576b7bd02790d64749cb509f072bf7266a415bffadb6a86",
+      "sha256": "6b9265fded7dcf39a9b702d78a6dd27b5059055da1cfbe028e74562313b1fbc9",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-1000-front.webp"
@@ -28,7 +28,7 @@
       "visualKind": "PANTS_FLATLAY_PREVIEW",
       "colourwayId": "bone",
       "colourHex": "#f5f1e9",
-      "sha256": "7e33be41ea0acd9555c9c377923e7e93d7c4a1ef0b1257c72b1b45716c1542b0",
+      "sha256": "0ea87242f029dcd9cdf68135e9d0fbc09f9ee5696eac25a0076f3cb08003d511",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-0998-front.webp"
@@ -40,7 +40,7 @@
       "visualKind": "PANTS_FLATLAY_PREVIEW",
       "colourwayId": "scarlet",
       "colourHex": "#dc2626",
-      "sha256": "65f0c401b500b2a72eb303c45fb7e597d608738c69cebd8ed896bfba17e9dee1",
+      "sha256": "443140d00af9b9cc6f422593bd2b0a0ad31b48e793547206c612c2f045a8fdd9",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-0996-front.webp"
@@ -52,7 +52,7 @@
       "visualKind": "PANTS_FLATLAY_PREVIEW",
       "colourwayId": "mustard",
       "colourHex": "#ca8a04",
-      "sha256": "7b53d368a28462535a4c1772a555ff9cbc810b4d8775f2a1cf5f39177daccd9a",
+      "sha256": "e14743c4a64e068c2109b37e9166eba69bc5ce5efc3580d4fe79fa5e27d9bce0",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-0994-front.webp"
@@ -64,7 +64,7 @@
       "visualKind": "PANTS_FLATLAY_PREVIEW",
       "colourwayId": "cobalt",
       "colourHex": "#1e3a8a",
-      "sha256": "530c58c260d86f0dfde5489bd000a73878da25bbf7a15b5bc934c8302a444e49",
+      "sha256": "bc5473c25b3e45385168d26606e02399d507ee687526453fd346aecb3789dba2",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-0992-front.webp"
@@ -76,7 +76,7 @@
       "visualKind": "PANTS_FLATLAY_PREVIEW",
       "colourwayId": "plum",
       "colourHex": "#5b2c6f",
-      "sha256": "dfafc4eed46f0ecca45d809482f77a98fc2e7c6a7102b7a72f1a015edb2cf6e1",
+      "sha256": "8e7d147406a5b29a95fca989a3b70db9404bf4573a419bcf5830cefe19d73b2f",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-0990-front.webp"
@@ -88,7 +88,7 @@
       "visualKind": "PANTS_FLATLAY_PREVIEW",
       "colourwayId": "teal",
       "colourHex": "#0f766e",
-      "sha256": "b08996e61a3a793ec1356ba8d0da8a88855b490666d90ec098f5777148493df5",
+      "sha256": "193db29bcb860e963b80ad2275cc0d4d41a71369e27ae2c378d69b7608119cbb",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-0988-front.webp"
@@ -100,7 +100,7 @@
       "visualKind": "PANTS_FLATLAY_PREVIEW",
       "colourwayId": "forest",
       "colourHex": "#14532d",
-      "sha256": "2b2f2eb0c008940f842fb969fd59f572a1e7632b16ee0c25fff60aabecaa7edf",
+      "sha256": "525b79a07ef6f17efc4da22a9eae18acb67dc1748759fd537645571885a9ebab",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-0986-front.webp"
@@ -112,7 +112,7 @@
       "visualKind": "PANTS_FLATLAY_PREVIEW",
       "colourwayId": "cherry",
       "colourHex": "#9f1239",
-      "sha256": "05ef7f1d067043233b550c05dc984f7fed980732dc750a5db78bab5e85ecddc8",
+      "sha256": "fbe982a667a7cd465d48edfa7b424c3382af64195e478a225eefcc4235407c83",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-0984-front.webp"
@@ -124,7 +124,7 @@
       "visualKind": "PANTS_FLATLAY_PREVIEW",
       "colourwayId": "cobalt",
       "colourHex": "#1e3a8a",
-      "sha256": "00387cf44eb94a2dabf7aba0c703a977770a0477cfd18ba5d8e828a9d6474471",
+      "sha256": "3421de19ae501ba48fc1741e4f4dd7925c1ca621e53bbfdbee38b2b2e5518a51",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-0982-front.webp"
@@ -136,7 +136,7 @@
       "visualKind": "TEE_FLATLAY_PREVIEW",
       "colourwayId": "forest",
       "colourHex": "#14532d",
-      "sha256": "be1984b91cf8743d0c2a81a561bc9239c0bc39be6f7090f117676bbcf5c0fef1",
+      "sha256": "51232779fc3cc38703ecffe6a3e46e983edad4aae67eff32d52ef5ac10137570",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-0999-front.webp"
@@ -148,7 +148,7 @@
       "visualKind": "TEE_FLATLAY_PREVIEW",
       "colourwayId": "terracotta",
       "colourHex": "#c2410c",
-      "sha256": "c3e83a43bebce7078b97a58734ff637e2105f5b7e51f2fe9e34539c7c5e5ef65",
+      "sha256": "3cb36a257c88334faab3157a0182aa1221eaa947f4e533d652b269e1c9c31e5e",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-0997-front.webp"
@@ -160,7 +160,7 @@
       "visualKind": "TEE_FLATLAY_PREVIEW",
       "colourwayId": "bone",
       "colourHex": "#f5f1e9",
-      "sha256": "ecfdc4150a28922a89d946565e5d2f32bcebd94e0bac618bab74cb7755205cb4",
+      "sha256": "d3c27089a1f03d6e6b65cf05eb009aa6d2bd6e95263c5ecb86fb186137248946",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-0995-front.webp"
@@ -172,7 +172,7 @@
       "visualKind": "TEE_FLATLAY_PREVIEW",
       "colourwayId": "teal",
       "colourHex": "#0f766e",
-      "sha256": "fffdd13a82c0732a63e91b33c35018c46825e708f846dfe19cecea929cca9420",
+      "sha256": "050e8a140d72816b711d5840d9ebfa4e58a5784dde0ef8ba609ad11b2717c927",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-0993-front.webp"
@@ -184,7 +184,7 @@
       "visualKind": "ON_MODEL_CPU_COMPOSITE",
       "colourwayId": "chocolate",
       "colourHex": "#3f2e27",
-      "sha256": "be8134676d369c56e4eda9ade84024923ec9c3d3e9c095bf908bc6f28b9f42fe",
+      "sha256": "378dd013ed49aefc854006d48cba05caa1d94143af6db03640efd8d524efc305",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-0991-front.webp"
@@ -196,7 +196,7 @@
       "visualKind": "ON_MODEL_CPU_COMPOSITE",
       "colourwayId": "charcoal",
       "colourHex": "#1a1a1a",
-      "sha256": "d04df7a0020785b9e0d7bb297909564d883b07b3d349c182ae945fdab2b16aa7",
+      "sha256": "6ea9bee01600a1ef68490c70adb31636f9c6ad44acfbf676ef21819a5623c6b8",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-0989-front.webp"
@@ -208,7 +208,7 @@
       "visualKind": "ON_MODEL_CPU_COMPOSITE",
       "colourwayId": "chocolate",
       "colourHex": "#3f2e27",
-      "sha256": "be8134676d369c56e4eda9ade84024923ec9c3d3e9c095bf908bc6f28b9f42fe",
+      "sha256": "378dd013ed49aefc854006d48cba05caa1d94143af6db03640efd8d524efc305",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-0987-front.webp"
@@ -220,7 +220,7 @@
       "visualKind": "TEE_FLATLAY_PREVIEW",
       "colourwayId": "cream",
       "colourHex": "#fffefa",
-      "sha256": "b36dd5a48ed7536aaad01bd711d5fdc52efc0693c26c0d0102f489dcfa9eaced",
+      "sha256": "c0ef6168320c74c0f3e3cfaa304da00c97fb627051c019b3622cdaf485b20573",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-0985-front.webp"
@@ -232,7 +232,7 @@
       "visualKind": "TEE_FLATLAY_PREVIEW",
       "colourwayId": "forest",
       "colourHex": "#14532d",
-      "sha256": "f73bc89922211d0089a914e69b5060e2cbb866b3761d5230496b94704293c91a",
+      "sha256": "9f25c56d1d0c92a5f55f43b420f964a21907db73c0450f3c5eba91557bc47e8c",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-0983-front.webp"
@@ -244,7 +244,7 @@
       "visualKind": "TEE_FLATLAY_PREVIEW",
       "colourwayId": "cobalt",
       "colourHex": "#1e3a8a",
-      "sha256": "859ec0335053daec25af2e7ca8dc9c059d5e82f0f90964d4c35b50406a77a0d8",
+      "sha256": "f82b12c5992cd0f6f7de820959813914a2b9abfaec3f268e0b5a840e3b37fe45",
       "qaPass": true,
       "qaCode": null,
       "path": "E:\\Projects\\Gita\\apps\\web\\docs\\qa\\apparel-visual-baseline\\after-vmb-0981-front.webp"
