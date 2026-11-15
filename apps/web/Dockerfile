@@ -1,11 +1,11 @@
-# syntax=docker/dockerfile:1
+﻿# syntax=docker/dockerfile:1
 # Multi-stage Node 22 image. Default CMD runs the WEB service; run the worker with:
 #   CMD override: npm run worker   (Railway: separate service, Start Command `npm run worker`)
 # Dev dependencies are kept in the runtime image on purpose: `prisma migrate deploy` (prisma CLI)
 # and `npm run worker` (tsx) both need them at runtime.
 
 FROM node:22-bookworm-slim AS base
-RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates fonts-dejavu-core && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 FROM base AS deps
@@ -27,6 +27,7 @@ COPY --from=build --chown=node:node /app/prisma ./prisma
 COPY --from=build --chown=node:node /app/src ./src
 COPY --from=build --chown=node:node /app/scripts ./scripts
 COPY --from=build --chown=node:node /app/public ./public
+COPY --from=build --chown=node:node /app/assets ./assets
 COPY --from=build --chown=node:node /app/data ./data
 USER node
 EXPOSE 3000
