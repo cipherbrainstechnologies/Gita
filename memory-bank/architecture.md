@@ -1,6 +1,7 @@
 # Gita / VERSE//MODE — Architecture
 
 **Product**: India-first preorder apparel commerce (working brand `VERSE//MODE`).  
+**USP**: Designer tees and track pants with unique mindset prints — garments are designed pieces, not blank blanks + slogan. Shop imagery is per-SKU `cpu-designer-flatlay-v5` (no shared on-model plate).  
 **Workspace root**: `e:\Projects\Gita` — this is the product monorepo and the only folder Cursor/Railway should treat as the company codebase.
 
 ## System map

@@ -34,10 +34,11 @@ Never fabricate scripture; never claim AI mockups are physical samples; never co
 
 | Area | Status | Notes |
 |------|--------|-------|
-| Home / shop grid | Working | DB catalog preferred; sample fallback |
+| Home / shop grid | Working | USP chips DESIGNER TEE / DESIGNER TRACK; hover back view |
 | PDP `/shop/[slug]` | Upgraded | Gallery + honest empty state; waitlist vs preorder |
+| **USP designer garments** | **Live on Railway** | Unique flat-lay per SKU (`cpu-designer-flatlay-v5`); mindset print on designer tee + track pant; no shared KARMA plate |
 | Quiet Power media | Done (simulated) | `/images/quiet-power-editorial-*.webp` |
-| Karma Action media | Done (simulated) | V2 karma editorial webps |
+| Karma Action media | Done (simulated) | V2 karma editorial webps (editorial only; shop cards use per-SKU flat-lay) |
 | `/inspiration` verse library | Done (draft) | 5 cited Gita passages + original slogans |
 | Cart / account / orders / size-chart / contact | Present (other agent) | DB-backed where configured |
 | Checkout | Waitlist + gated paid path | Paid only if PREORDER + `ENABLE_CHECKOUT` + capacity + vault |
@@ -131,11 +132,18 @@ Key routes: `/`, `/shop`, `/shop/quiet-is-a-power-move`, `/shop/karma-action-ove
 
 ---
 
-## 11. Next recommended sprint
+## 11. USP visual ops (2026-11-15)
 
-1. Apply V2 migration + seed on Railway Postgres.  
-2. Redeploy and verify Quiet Power PDP shows gallery (not SVG).  
-3. Persist studio pipeline stages on `JobRun`.  
-4. Upload ProductMediaV2 to object storage with approval flags.  
-5. Language reviewer workflow for ContentLocalization.  
-6. Keep Admin/Staff agent changes; merge carefully.
+- Branch merged to `main`: `feat/usp-designer-mindset-garments`  
+- Renderer: `cpu-designer-flatlay-v5` — always FLATLAY (no shared on-model plate)  
+- Re-register on Railway: `npm run visuals:designer` / `npx tsx scripts/reregister-designer-visuals.ts --limit=120 --force`  
+- Last run: **120 registered, 0 failed**, `usp: DESIGNER_GARMENT_WITH_MINDSET_PRINT`  
+- Live smoke: `/shop` shows DESIGNER TEE/TRACK + Wear the mindset; `/api/catalog/on-model/...` returns unique webp flat-lays  
+
+## 12. Next recommended sprint
+
+1. Persist studio pipeline stages on `JobRun`.  
+2. Upload ProductMediaV2 to object storage with approval flags.  
+3. Language reviewer workflow for ContentLocalization.  
+4. Keep Admin/Staff agent changes; merge carefully.  
+5. Payments remain **NO-GO** until sample + counsel + Razorpay live gates.

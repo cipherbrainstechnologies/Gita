@@ -89,3 +89,14 @@
 - Affected Modules: `apps/web/prisma`, `scripts/seed-1000-product-concepts.ts`, `src/lib/catalog.ts`, `src/lib/checkout.ts`, deposit webhook
 - Reversal Conditions: Only after GPU media QA, supplier approvals, and legal/Razorpay sign-off documented in `docs/qa/REVENUE_GO_LIVE_GATES.md`.
 - Status: Active
+
+### Decision #010 — USP = designer tee/track + unique mindset print (flat-lay)
+
+- Date: 2026-11-15
+- Author: Love Chauhan (product USP) via Agent
+- Summary: Brand USP is good clothes with a mindset printed on designer tees and track pants — garments themselves are designed, not generic blanks with a slogan. Catalog media uses `cpu-designer-flatlay-v5` per SKU (unique verse/mindset artwork + garment-accurate tee or pants silhouette). Shared KARMA / on-model plates are excluded from shop cards. Shop labels: DESIGNER TEE / DESIGNER TRACK; copy “Wear the mindset”.
+- Reason: Shared editorial plates made the grid look like one tee reprint; USP requires distinct designer garments with mindset messaging.
+- Affected Modules: `apps/web/src/lib/fashion/*`, ProductCard, on-model/catalog media APIs, `scripts/reregister-designer-visuals.ts`, shop copy
+- Reversal Conditions: Commissioned physical photography library with per-SKU releases; then flat-lay can become secondary preview.
+- Status: Active
+
