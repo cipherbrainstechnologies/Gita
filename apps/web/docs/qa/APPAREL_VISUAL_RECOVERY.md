@@ -1,8 +1,9 @@
 # Apparel visual recovery — pilot evidence
 
-**Renderer:** `cpu-garment-truth-v3`  
+**Renderer:** `cpu-garment-truth-v4`  
 **Date:** 2026-11-15  
-**Branch:** `fix/apparel-visual-rescue`
+**Git:** `734c531` on `main`  
+**Railway web deploy:** `f399f4d1` SUCCESS · worker `5afe9f77` SUCCESS
 
 ## What changed
 

@@ -70,6 +70,16 @@
 - Reversal Conditions: Replace role matrix with an invitation/RBAC admin UI (E03); replace demo switches once real supplier capacity and POS flows exist.
 - Status: Active
 
+### Decision #009 — Garment-truth imagery: pants never use tee photos
+
+- Date: 2026-11-15
+- Author: Agent (apparel visual rescue)
+- Summary: `PANTS` SKUs render waist-to-ankle flat-lay (`PANTS_FLATLAY_PREVIEW`) until licensed bottoms photography exists. Opaque artwork plates and broad mask recolour are removed. Tee on-model photos only for near-black colourways; otherwise colour-matched tee flat-lay. Honest diversity = distinct source photos (6), not 24 model-ID aliases. Renderer `cpu-garment-truth-v4`.
+- Reason: Live shop showed AMBITION track pants as black tee photos with purple/olive polygon artifacts.
+- Affected Modules: `apps/web/src/lib/fashion/*`, ProductCard, on-model API, batch script, Docker fonts
+- Reversal Conditions: Commissioned pants + colourway on-model library with aligned masks and model releases.
+- Status: Active
+
 ### Decision #008 — 1,000 concept SKUs vs paid preorder gates
 
 - Date: 2026-11-15
