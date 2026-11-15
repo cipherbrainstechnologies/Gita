@@ -71,3 +71,10 @@ GO / NO-GO for real payments: **NO-GO** (unchanged gates).
 - `npm run test`: PASS — 15 files / **124 tests**
 - `npm run typecheck`: PASS
 - `npm run build`: PASS — routes include `/inspiration`, `/shop/[slug]`, `/admin/content`, `/admin/collections`
+
+## 2026-11-15 — Apparel visual rescue (cpu-garment-truth-v3)
+- Baseline: docs/qa/APPAREL_VISUAL_FAILURE_BASELINE.md
+- Recovery: docs/qa/APPAREL_VISUAL_RECOVERY.md
+- Pilot: 10 pants FLATLAY + 10 tees (on-model or colour-matched flat-lay) — all QA pass
+- Tests: 144 passed; typecheck 0 errors after prisma generate
+- Distinct human source photos: 6; pants on-model photos: 0

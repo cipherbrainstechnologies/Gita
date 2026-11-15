@@ -28,11 +28,19 @@ export function OnModelProductGallery({images, productName, disclosure}: Props) 
           className="editorial-photo"
           unoptimized={current.src.includes("/api/catalog/on-model/")}
         />
-        <span className="editorial-watermark">
-          {isPhotoSample ? PHOTO_SAMPLE_WATERMARK : MODEL_PREVIEW_WATERMARK}
+        <span className="editorial-watermark editorial-watermark-compact">
+          {isPhotoSample ? PHOTO_SAMPLE_WATERMARK : "Digital garment preview"}
         </span>
       </div>
-      {disclosure && <p className="small-note pdp-disclosure">{disclosure}</p>}
+      {disclosure && (
+        <details className="pdp-disclosure-details">
+          <summary>Product photography notes</summary>
+          <p className="small-note pdp-disclosure">{disclosure}</p>
+          {!isPhotoSample && (
+            <p className="small-note">{MODEL_PREVIEW_WATERMARK}</p>
+          )}
+        </details>
+      )}
       <div className="editorial-thumbs" role="group" aria-label={`${productName} image views`}>
         {images.map((asset, index) => (
           <button

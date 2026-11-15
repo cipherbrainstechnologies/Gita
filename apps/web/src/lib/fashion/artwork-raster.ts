@@ -21,7 +21,10 @@ function wrapLines(text: string, max = 22): string[] {
   return lines.slice(0, 4);
 }
 
-/** Deterministic print artwork PNG (typography exact — not model-generated text). */
+/**
+ * Transparent RGBA print artwork — ink/motif pixels only.
+ * Never draws an opaque background rectangle (that caused solid colour squares on PDPs).
+ */
 export async function renderArtworkPng(dna: DesignDna): Promise<{bytes: Buffer; sha256: string}> {
   const w = 800;
   const h = 800;
@@ -29,16 +32,18 @@ export async function renderArtworkPng(dna: DesignDna): Promise<{bytes: Buffer; 
   const tspans = lines
     .map(
       (t, i) =>
-        `<tspan x="400" dy="${i === 0 ? 0 : 42}">${escapeSvg(t)}</tspan>`,
+        `<tspan x="400" dy="${i === 0 ? 0 : 44}">${escapeSvg(t)}</tspan>`,
     )
     .join("");
+  const ink = dna.accentHex;
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
-  <rect width="100%" height="100%" fill="${dna.colourHex}"/>
-  <text text-anchor="middle" x="400" y="360" font-family="Georgia, serif" font-size="32" fill="${dna.accentHex}">${tspans}</text>
-  <text x="400" y="720" text-anchor="middle" font-size="14" fill="${dna.accentHex}" opacity="0.6">${escapeSvg(dna.placement)} · ${escapeSvg(dna.artStyle)}</text>
+  <text text-anchor="middle" x="400" y="340" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-weight="700" fill="${ink}" stroke="rgba(0,0,0,0.35)" stroke-width="2" paint-order="stroke">${tspans}</text>
 </svg>`;
-  const bytes = await sharp(Buffer.from(svg)).png().toBuffer();
+  const bytes = await sharp(Buffer.from(svg))
+    .ensureAlpha()
+    .png({compressionLevel: 9})
+    .toBuffer();
   const sha256 = createHash("sha256").update(bytes).digest("hex");
   return {bytes, sha256};
 }

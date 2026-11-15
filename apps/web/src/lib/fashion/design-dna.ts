@@ -1,4 +1,5 @@
 import {createHash} from "node:crypto";
+import {pickModelIdentityId} from "./model-identities";
 
 export type DesignDna = {
   conceptId: string;
@@ -119,7 +120,8 @@ export function buildDesignDna(input: {
     garmentFamily === "PANTS"
       ? pick(PANT_CUTS, seed, 2)
       : pick(TEE_CUTS, seed, 3);
-  const modelIdentityId = `VM-MODEL-${String((seed % 24) + 1).padStart(2, "0")}`;
+  const modelIdentityId = pickModelIdentityId(seed, garmentFamily);
+  const placementDefault = garmentFamily === "PANTS" ? "THIGH PANEL" : "CHEST";
   return {
     conceptId: input.slug,
     quoteFingerprint: input.quoteFingerprint,
@@ -134,8 +136,8 @@ export function buildDesignDna(input: {
     modelIdentityId,
     sceneId: pick(SCENES, seed, 7),
     renderSeed: seed,
-    promptVersion: "fashion-dna-v1",
-    placement: input.placement ?? "CHEST",
+    promptVersion: "fashion-dna-v2",
+    placement: input.placement ?? placementDefault,
     motif: input.motif ?? "ORIGINAL",
   };
 }

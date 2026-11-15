@@ -31,6 +31,8 @@ export async function registerOnModelMedia(
     rendererVersion?: string;
     generationSource?: string;
     fileUrlOverrides?: Partial<Record<OnModelView, string>>;
+    visualKind?: string;
+    presentation?: "ON_MODEL" | "FLATLAY";
   },
 ): Promise<RegisterOnModelResult | null> {
   if (!p.tagline || !p.designBriefFingerprint) return null;
@@ -50,10 +52,23 @@ export async function registerOnModelMedia(
   });
 
   const fingerprint = createHash("sha256")
-    .update(JSON.stringify({dna, v: opts?.rendererVersion ?? "on-model-raster-v1"}), "utf8")
+    .update(JSON.stringify({dna, v: opts?.rendererVersion ?? "cpu-garment-truth-v3"}), "utf8")
     .digest("hex");
-  const visualKind = "ON_MODEL_CPU_COMPOSITE";
-  const origin = "CPU_COMPOSITE_PREVIEW";
+  const isPants = dna.garmentFamily === "PANTS";
+  const presentation = opts?.presentation ?? (isPants ? "FLATLAY" : "ON_MODEL");
+  const visualKind =
+    opts?.visualKind ??
+    (isPants
+      ? "PANTS_FLATLAY_PREVIEW"
+      : presentation === "FLATLAY"
+        ? "TEE_FLATLAY_PREVIEW"
+        : "ON_MODEL_CPU_COMPOSITE");
+  const origin =
+    visualKind === "PANTS_FLATLAY_PREVIEW"
+      ? "PANTS_FLATLAY_PREVIEW"
+      : visualKind === "TEE_FLATLAY_PREVIEW"
+        ? "TEE_FLATLAY_PREVIEW"
+        : "CPU_COMPOSITE_PREVIEW";
 
   const imagesJson: {
     src: string;
@@ -100,7 +115,12 @@ export async function registerOnModelMedia(
     imagesJson.push({
       src: fileUrl,
       view: g.view === "lifestyle" ? "lifestyle" : g.view === "detail" ? "detail" : g.view,
-      alt: `${p.slug} on-model ${g.view} — ${dna.modelIdentityId}`,
+      alt:
+        visualKind === "PANTS_FLATLAY_PREVIEW"
+          ? `${p.slug} track pant flat-lay ${g.view}`
+          : visualKind === "TEE_FLATLAY_PREVIEW"
+            ? `${p.slug} tee flat-lay ${g.view}`
+            : `${p.slug} on-model ${g.view} — ${dna.modelIdentityId}`,
       origin,
       approved: false,
       role: g.mediaRole,
@@ -125,12 +145,23 @@ export async function registerOnModelMedia(
         ...(meta ?? {}),
         designDna: dna,
         onModelGeneration: {
-          rendererVersion: opts?.rendererVersion ?? "on-model-raster-v1",
-          generationSource: opts?.generationSource ?? "CPU_COMPOSITE",
+          rendererVersion: opts?.rendererVersion ?? "cpu-garment-truth-v3",
+          generationSource:
+            opts?.generationSource ??
+            (visualKind === "PANTS_FLATLAY_PREVIEW"
+              ? "PANTS_FLATLAY"
+              : visualKind === "TEE_FLATLAY_PREVIEW"
+                ? "TEE_FLATLAY"
+                : "CPU_COMPOSITE"),
           fingerprint,
           modelIdentityId: dna.modelIdentityId,
+          presentation,
+          visualKind,
+          garmentFamily: dna.garmentFamily,
+          colourwayId: dna.colourwayId,
+          colourHex: dna.colourHex,
         },
-        visualVersion: opts?.rendererVersion ?? "on-model-raster-v1",
+        visualVersion: opts?.rendererVersion ?? "cpu-garment-truth-v3",
       },
       images: imagesJson,
       displaySaleReady: true,

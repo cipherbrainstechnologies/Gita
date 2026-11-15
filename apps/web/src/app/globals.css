@@ -67,3 +67,11 @@ h1,h2,h3,.logo,.kicker,.nav a,.header-actions a,.chip,.eyebrow,.price,.price-big
 .pagination-row,.shop-filters{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin:22px 0}.shop-filters input,.shop-filters select{padding:10px 12px;border:1px solid var(--line);min-width:160px;background:#fffefa}.pagination-row span{font-size:13px;color:#5f5f58}
 @media(max-width:960px){.verse-grid{grid-template-columns:1fr}.original-grid{grid-template-columns:repeat(2,1fr)}.nav{gap:11px}.nav a{font-size:10px}}@media(max-width:670px){.original-grid{grid-template-columns:1fr}.editorial-primary{aspect-ratio:4/4.2}.editorial-thumb{width:90px}.photo-empty-state{min-height:320px}.site-header .nav{flex-wrap:wrap}}
 
+
+/* Apparel visual rescue — colour swatch + compact disclosure */
+.colour-swatch{display:inline-block;width:14px;height:14px;border-radius:50%;border:1px solid #cfcfc6;margin-top:8px;vertical-align:middle}
+.pdp-disclosure-details{margin-top:12px;max-width:520px}
+.pdp-disclosure-details summary{cursor:pointer;font-size:12px;letter-spacing:.06em;font-weight:700;color:var(--muted)}
+.editorial-watermark-compact{max-width:70%;font-size:9px;padding:6px 10px;letter-spacing:.08em}
+.on-model-gallery .editorial-primary{aspect-ratio:4/5}
+@media(max-width:680px){.product-image{aspect-ratio:4/5}.editorial-watermark{font-size:8px;padding:6px 8px}}

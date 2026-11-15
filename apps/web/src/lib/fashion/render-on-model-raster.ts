@@ -4,30 +4,24 @@ import {join} from "node:path";
 import sharp from "sharp";
 import type {DesignDna} from "./design-dna";
 import {renderArtworkPng} from "./artwork-raster";
-import {recolourGarment} from "./fabric-recolor";
-import {FRAME, garmentMaskSvg, printBox} from "./garment-placements";
+import {resolveGarmentPresentation} from "./garment-family-contract";
+import {FRAME, printBox} from "./garment-placements";
 import {getModelIdentity} from "./model-identities";
+import {renderPantsFlatlay} from "./pants-flatlay-raster";
+import {matchesBlackEditorialTee, renderTeeFlatlay} from "./tee-flatlay-raster";
+import type {OnModelView} from "./on-model-types";
 
-export type OnModelView = "front" | "back" | "detail" | "lifestyle";
+export type {OnModelView};
 
-export const RENDERER_VERSION = "cpu-garment-mask-v2";
+/** Bump forces batch re-render of previously published bad composites. */
+export const RENDERER_VERSION = "cpu-garment-truth-v3";
 
 function publicPath(urlPath: string, cwd = process.cwd()): string {
   const rel = urlPath.replace(/^\//, "");
   return join(cwd, "public", rel);
 }
 
-async function maskBuffer(dna: DesignDna, view: OnModelView): Promise<Buffer> {
-  const svg =
-    view === "detail"
-      ? garmentMaskSvg(dna, "front")
-      : view === "lifestyle"
-        ? garmentMaskSvg(dna, "front")
-        : garmentMaskSvg(dna, view);
-  return sharp(Buffer.from(svg)).resize(FRAME.width, FRAME.height).png().toBuffer();
-}
-
-/** Free CPU compositor — garment-masked recolour + deterministic print; not GPU VTON. */
+/** Free CPU compositor — garment-family truthful; pants never use tee photos. */
 export async function renderOnModelRaster(
   dna: DesignDna,
   view: OnModelView,
@@ -37,9 +31,38 @@ export async function renderOnModelRaster(
   mimeType: "image/webp";
   modelIdentityId: string;
   rendererVersion: string;
+  presentation: "ON_MODEL" | "FLATLAY";
+  visualKind: string;
 }> {
+  const contract = resolveGarmentPresentation(dna);
+  if (dna.garmentFamily === "PANTS" || contract.presentation === "FLATLAY") {
+    const flat = await renderPantsFlatlay(dna, view);
+    return {
+      ...flat,
+      modelIdentityId: dna.modelIdentityId,
+      rendererVersion: RENDERER_VERSION,
+      presentation: "FLATLAY",
+      visualKind: "PANTS_FLATLAY_PREVIEW",
+    };
+  }
+
+  // Black editorial photos only match dark colourways; otherwise colour-accurate tee flat-lay.
+  if (!matchesBlackEditorialTee(dna.colourHex)) {
+    const flat = await renderTeeFlatlay(dna, view);
+    return {
+      ...flat,
+      modelIdentityId: dna.modelIdentityId,
+      rendererVersion: RENDERER_VERSION,
+      presentation: "FLATLAY",
+      visualKind: "TEE_FLATLAY_PREVIEW",
+    };
+  }
+
   const model = getModelIdentity(dna.modelIdentityId);
-  const flip = dna.renderSeed % 5 === 0;
+  if (!model.garmentFamilies.includes("TEES")) {
+    throw new Error(`INCOMPATIBLE_MODEL:${model.id}:TEES`);
+  }
+
   const asset =
     view === "back"
       ? model.backAsset
@@ -49,30 +72,30 @@ export async function renderOnModelRaster(
           ? "/images/quiet-power-editorial-detail.webp"
           : model.frontAsset;
 
-  const basePath = publicPath(asset);
-  let photo = sharp(await readFile(basePath)).rotate().resize(FRAME.width, FRAME.height, {
-    fit: "cover",
-    position: "centre",
-  });
-  if (flip) photo = photo.flop();
+  // Hard reject if somehow a non-tee path slipped in
+  const gate = resolveGarmentPresentation(dna, asset);
+  if (!gate.ok && gate.code === "TEE_PHOTO_FOR_PANTS") {
+    const flat = await renderPantsFlatlay(dna, view);
+    return {
+      ...flat,
+      modelIdentityId: dna.modelIdentityId,
+      rendererVersion: RENDERER_VERSION,
+      presentation: "FLATLAY",
+      visualKind: "PANTS_FLATLAY_PREVIEW",
+    };
+  }
 
-  const photoBuf = await photo
+  const basePath = publicPath(asset);
+  // Never flop — source editorials contain printed logos that would mirror.
+  // Never broad-mask recolour — ellipse/polygon masks created purple/olive body patches.
+  let composed = await sharp(await readFile(basePath))
+    .rotate()
+    .resize(FRAME.width, FRAME.height, {fit: "cover", position: "centre"})
     .modulate({
-      brightness: 0.96 + (dna.renderSeed % 4) * 0.01,
-      saturation: 1.02,
+      brightness: 0.99 + (dna.renderSeed % 2) * 0.01,
+      saturation: 1.0,
     })
     .ensureAlpha()
-    .toBuffer();
-
-  const mask = await maskBuffer(dna, view);
-  const recoloured = await recolourGarment(photoBuf, mask, dna.colourHex, dna.garmentFamily === "PANTS" ? 0.5 : 0.62);
-
-  const shadowSvg = `<svg width="${FRAME.width}" height="${FRAME.height}">
-    <ellipse cx="${FRAME.width / 2}" cy="${FRAME.height - 80}" rx="340" ry="36" fill="rgba(0,0,0,0.12)"/>
-  </svg>`;
-
-  let composed = await sharp(recoloured)
-    .composite([{input: Buffer.from(shadowSvg), blend: "multiply"}])
     .toBuffer();
 
   if (view === "front" || view === "back") {
@@ -97,6 +120,8 @@ export async function renderOnModelRaster(
     mimeType: "image/webp",
     modelIdentityId: model.id,
     rendererVersion: RENDERER_VERSION,
+    presentation: "ON_MODEL",
+    visualKind: "ON_MODEL_CPU_COMPOSITE",
   };
 }
 

@@ -48,10 +48,14 @@ export async function GET(_req: Request, ctx: {params: Promise<{slug: string; vi
     status: 200,
     headers: {
       "Content-Type": "image/webp",
-      "Cache-Control": "public, max-age=86400, immutable",
+      "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
       ETag: `"${rendered.sha256}"`,
-      "X-Gita-Visual-Kind": "ON_MODEL_RASTER",
+      "X-Gita-Visual-Kind": rendered.visualKind,
+      "X-Gita-Presentation": rendered.presentation,
+      "X-Gita-Garment-Family": dna.garmentFamily,
       "X-Gita-Model-Identity": rendered.modelIdentityId,
+      "X-Gita-Renderer": rendered.rendererVersion,
+      "X-Gita-Colourway": dna.colourwayId,
     },
   });
 }
