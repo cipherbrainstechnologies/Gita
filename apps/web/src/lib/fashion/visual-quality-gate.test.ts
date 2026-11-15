@@ -4,7 +4,7 @@ import {renderOnModelRaster} from "./render-on-model-raster";
 import {assessOnModelFrame} from "./visual-quality-gate";
 
 describe("visual-quality-gate", () => {
-  it("passes v3 tee compositor output", async () => {
+  it("passes designer tee flat-lay output", async () => {
     const dna = buildDesignDna({
       slug: "vmb-qa-001",
       designBriefFingerprint: "fp-qa-001",
@@ -18,7 +18,8 @@ describe("visual-quality-gate", () => {
       visualKind: frame.visualKind,
     });
     expect(qa.pass).toBe(true);
-    expect(["ON_MODEL", "FLATLAY"]).toContain(frame.presentation);
+    expect(frame.presentation).toBe("FLATLAY");
+    expect(frame.visualKind).toBe("TEE_FLATLAY_PREVIEW");
     expect(frame.bytes.length).toBeGreaterThan(10_000);
   });
 

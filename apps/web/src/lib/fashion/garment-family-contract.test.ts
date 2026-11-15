@@ -63,8 +63,7 @@ describe("garment-family-contract", () => {
     expect(qa.pass).toBe(true);
   });
 
-  it("dark tee colourways can use on-model editorial photos", async () => {
-    // Force charcoal via fingerprint known to pick dark colour — assert valid presentation
+  it("tees always render as unique designer flat-lays (no shared model plates)", async () => {
     const dna = buildDesignDna({
       slug: "vmb-0999",
       designBriefFingerprint: "fp-tee-render-dark",
@@ -72,9 +71,11 @@ describe("garment-family-contract", () => {
       quoteText: "Today is enough.",
       garmentFamily: "TEES",
     });
+    const c = resolveGarmentPresentation(dna);
+    expect(c.presentation).toBe("FLATLAY");
     const frame = await renderOnModelRaster(dna, "front");
-    expect(["ON_MODEL", "FLATLAY"]).toContain(frame.presentation);
-    expect(["ON_MODEL_CPU_COMPOSITE", "TEE_FLATLAY_PREVIEW"]).toContain(frame.visualKind);
+    expect(frame.presentation).toBe("FLATLAY");
+    expect(frame.visualKind).toBe("TEE_FLATLAY_PREVIEW");
     const qa = await assessOnModelFrame(frame.bytes, dna, "front", {
       presentation: frame.presentation,
       visualKind: frame.visualKind,
@@ -82,3 +83,4 @@ describe("garment-family-contract", () => {
     expect(qa.pass).toBe(true);
   });
 });
+

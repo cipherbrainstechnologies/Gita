@@ -52,7 +52,14 @@ export function resolveGarmentPresentation(
       };
     }
   }
-  return {ok: true, presentation: "ON_MODEL"};
+  // USP catalog default: unique designer tee flat-lay with mindset print.
+  // Shared editorial on-model plates are never storefront-primary until per-SKU sample photos exist.
+  return {
+    ok: true,
+    presentation: "FLATLAY",
+    code: "TEE_DESIGNER_FLATLAY",
+    detail: "Designer tee flat-lay with unique print — not a shared model plate",
+  };
 }
 
 export function assertPantsNotTeePhoto(dna: DesignDna, sourceAssetPath: string): void {

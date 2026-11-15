@@ -1,38 +1,49 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import {useState} from "react";
 import type {CatalogProduct} from "@/lib/catalog";
 
 export function ProductCard({product}: {product: CatalogProduct}) {
-  const cover = product.media?.find((m) => m.view === "front") ?? product.media?.[0];
-  const isOnModelRaster =
-    cover?.src.includes("/api/catalog/on-model/") ||
-    cover?.src.includes("/api/assets/generated/") ||
-    (cover as {origin?: string} | undefined)?.origin === "CPU_COMPOSITE_PREVIEW" ||
-    (cover as {origin?: string} | undefined)?.origin === "PANTS_FLATLAY_PREVIEW";
+  const front =
+    product.media?.find((m) => m.view === "front") ??
+    product.media?.find((m) => m.view === "on-model") ??
+    product.media?.[0];
+  const back = product.media?.find((m) => m.view === "back");
+  const [hover, setHover] = useState(false);
+  const cover = hover && back ? back : front;
+
   const isPants =
     product.category?.toUpperCase().includes("PANT") ||
-    product.name.toUpperCase().includes("TRACK PANT") ||
-    product.fit?.toUpperCase().includes("TRACK");
+    product.name.toUpperCase().includes("TRACK PANT");
+
   const chip = product.orderable
     ? "PREORDER"
     : product.displaySaleReady && cover
-      ? "RESERVE INTEREST"
+      ? isPants
+        ? "DESIGNER TRACK"
+        : "DESIGNER TEE"
       : product.status === "CONCEPT"
         ? cover
-          ? isOnModelRaster
-            ? isPants
-              ? "FLAT-LAY PREVIEW"
-              : "DIGITAL PREVIEW"
-            : "MODEL PREVIEW"
+          ? "MINDSET PREVIEW"
           : "CONCEPT"
         : product.status.replace(/_/g, " ");
 
   return (
-    <Link href={`/shop/${product.slug}`} className="product-card">
+    <Link
+      href={`/shop/${product.slug}`}
+      className="product-card"
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setHover(true)}
+      onBlur={() => setHover(false)}
+    >
       <div className={`product-image ${cover ? "product-image-real" : ""}`}>
         <div className="chip">{chip}</div>
         {cover ? (
           <Image
+            key={cover.src}
             src={cover.src}
             alt={cover.alt}
             fill
@@ -46,17 +57,25 @@ export function ProductCard({product}: {product: CatalogProduct}) {
           />
         ) : (
           <div className="photo-pending">
-            <span>NEW PHOTOS COMING</span>
+            <span>DESIGNER LOOK COMING</span>
             <strong>{product.line}</strong>
-            <small>CORRECT GARMENT PHOTOGRAPHY REQUIRED</small>
+            <small>UNIQUE TEE / TRACK PRINT REQUIRED</small>
           </div>
+        )}
+        {back && cover && (
+          <span className="card-view-hint" aria-hidden>
+            {hover ? "BACK" : "FRONT"}
+          </span>
         )}
       </div>
       <div className="product-meta">
         <div>
           <div className="eyebrow">{product.collection}</div>
           <h3>{product.name}</h3>
-          <p>{product.fit}</p>
+          <p>
+            {product.fit}
+            {product.line ? ` · “${product.line.slice(0, 48)}${product.line.length > 48 ? "…" : ""}”` : ""}
+          </p>
           <span
             className="colour-swatch"
             title={product.palette}
@@ -78,23 +97,18 @@ export function ProductCard({product}: {product: CatalogProduct}) {
 function paletteToCss(palette: string): string {
   const map: Record<string, string> = {
     charcoal: "#1a1a1a",
+    sand: "#d6cbb8",
+    slate: "#475569",
+    olive: "#556b2f",
+    clay: "#b96952",
+    "muted-lilac": "#7c6bae",
     bone: "#f5f1e9",
     cobalt: "#1e3a8a",
     cherry: "#9f1239",
     sage: "#4d7c5f",
     rust: "#b45309",
     lavender: "#7c6bae",
-    sand: "#d6cbb8",
     teal: "#0f766e",
-    slate: "#475569",
-    olive: "#556b2f",
-    cream: "#fffefa",
-    denim: "#3d5a80",
-    plum: "#5b2c6f",
-    mustard: "#ca8a04",
-    forest: "#14532d",
-    "muted-lilac": "#a78bfa",
-    clay: "#c2410c",
   };
-  return map[palette.toLowerCase()] ?? "#60635d";
+  return map[palette] ?? "#242629";
 }

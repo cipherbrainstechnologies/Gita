@@ -9,20 +9,30 @@ const W = 1080;
 const H = 1440;
 
 export function printBox(dna: DesignDna, view: OnModelView): PrintBox | null {
-  if (view !== "front" && view !== "back") return null;
+  if (view !== "front" && view !== "back" && view !== "detail") return null;
   const isPants = dna.garmentFamily === "PANTS";
   if (isPants) {
-    // Thigh / calf panel — never a giant chest square
+    // Designer thigh / side panel — readable mindset line, never a chest plate
+    if (view === "detail") {
+      return {left: Math.floor(W * 0.28), top: Math.floor(H * 0.42), width: Math.floor(W * 0.44), height: Math.floor(H * 0.16)};
+    }
     return view === "back"
-      ? {left: Math.floor(W * 0.34), top: Math.floor(H * 0.48), width: Math.floor(W * 0.32), height: Math.floor(H * 0.12)}
-      : {left: Math.floor(W * 0.34), top: Math.floor(H * 0.44), width: Math.floor(W * 0.32), height: Math.floor(H * 0.12)};
+      ? {left: Math.floor(W * 0.3), top: Math.floor(H * 0.46), width: Math.floor(W * 0.4), height: Math.floor(H * 0.16)}
+      : {left: Math.floor(W * 0.3), top: Math.floor(H * 0.42), width: Math.floor(W * 0.4), height: Math.floor(H * 0.16)};
   }
   const placement = dna.placement.toUpperCase();
-  if (view === "back" || placement.includes("BACK")) {
-    return {left: Math.floor(W * 0.28), top: Math.floor(H * 0.36), width: Math.floor(W * 0.44), height: Math.floor(H * 0.2)};
+  if (view === "detail") {
+    return {left: Math.floor(W * 0.22), top: Math.floor(H * 0.34), width: Math.floor(W * 0.56), height: Math.floor(H * 0.28)};
   }
-  // Compact chest print — not 800×800 opaque plate
-  return {left: Math.floor(W * 0.32), top: Math.floor(H * 0.4), width: Math.floor(W * 0.36), height: Math.floor(H * 0.14)};
+  if (view === "back" || placement.includes("BACK")) {
+    // Large back statement — USP hero
+    return {left: Math.floor(W * 0.2), top: Math.floor(H * 0.32), width: Math.floor(W * 0.6), height: Math.floor(H * 0.28)};
+  }
+  if (placement.includes("CHEST") || placement.includes("LEFT")) {
+    return {left: Math.floor(W * 0.36), top: Math.floor(H * 0.36), width: Math.floor(W * 0.28), height: Math.floor(H * 0.12)};
+  }
+  // Centre chest statement on designer tee flat-lay
+  return {left: Math.floor(W * 0.24), top: Math.floor(H * 0.36), width: Math.floor(W * 0.52), height: Math.floor(H * 0.22)};
 }
 
 /**

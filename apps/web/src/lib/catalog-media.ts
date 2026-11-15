@@ -55,9 +55,10 @@ export async function loadProductMedia(productId: string, slug: string): Promise
     ]);
     const fromTable: ResolvedMedia[] = rows
       .filter((m) => {
-        if (isSharedTemplateUrl(m.fileUrl) && !m.approvedForPublication) return false;
+        if (isSharedTemplateUrl(m.fileUrl)) return false;
         if (m.visualKind === "TYPOGRAPHIC_FLAT" || m.origin === "TYPOGRAPHIC_PREVIEW") return false;
-        if (m.visualKind === "ON_MODEL_RASTER") return false;
+        if (m.visualKind === "ON_MODEL_RASTER" || m.visualKind === "ON_MODEL_CPU_COMPOSITE") return false;
+        if (m.origin === "CPU_COMPOSITE_PREVIEW") return false;
         if (m.fileUrl.includes("/api/catalog/visual/")) return false;
         return true;
       })
@@ -104,8 +105,10 @@ export async function loadStorefrontMediaForProducts(
   });
   const out = new Map<string, ConceptMedia[]>();
   for (const m of rows) {
-    if (isSharedTemplateUrl(m.fileUrl) && !m.approvedForPublication) continue;
+    if (isSharedTemplateUrl(m.fileUrl)) continue;
     if (m.visualKind === "TYPOGRAPHIC_FLAT" || m.fileUrl.includes("/api/catalog/visual/")) continue;
+    if (m.visualKind === "ON_MODEL_RASTER" || m.visualKind === "ON_MODEL_CPU_COMPOSITE") continue;
+    if (m.origin === "CPU_COMPOSITE_PREVIEW") continue;
     const list = out.get(m.productId) ?? [];
     list.push({
       src: m.fileUrl,

@@ -46,13 +46,16 @@ export default async function Shop({
 
   return (
     <div className="page-wrap">
-      <p className="kicker dark">{live ? "PREORDER OPEN FOR SELECTED PIECES" : "THE CONCEPT ARCHIVE / NOTHING FOR SALE YET"}</p>
+      <p className="kicker dark">
+        {live ? "PREORDER OPEN FOR SELECTED PIECES" : "DESIGNER TEES + TRACK PANTS / MINDSET ON THE GARMENT"}
+      </p>
       <h1 className="page-title">
-        All the ideas<span>.</span>
+        Wear the mindset<span>.</span>
       </h1>
       <p className="page-lead">
-        {page.total || products.length} design concepts in the archive. Paginated {page.pageSize} per page — editorial drafts are
-        not scripture and cannot be purchased until supplier, imagery and legal gates pass.
+        {page.total || products.length} designer concepts — each tee and track pant is its own cut and colourway with an
+        original mindset print. Hover a card for the back view. Nothing is for sale until supplier, sample and legal gates
+        pass.
       </p>
       <form className="filter-row shop-filters" action="/shop" method="get">
         <input name="q" defaultValue={sp.q ?? ""} placeholder="Search title or theme" aria-label="Search catalog" />

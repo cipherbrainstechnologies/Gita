@@ -52,23 +52,15 @@ export async function registerOnModelMedia(
   });
 
   const fingerprint = createHash("sha256")
-    .update(JSON.stringify({dna, v: opts?.rendererVersion ?? "cpu-garment-truth-v3"}), "utf8")
+    .update(JSON.stringify({dna, v: opts?.rendererVersion ?? "cpu-designer-flatlay-v5"}), "utf8")
     .digest("hex");
   const isPants = dna.garmentFamily === "PANTS";
-  const presentation = opts?.presentation ?? (isPants ? "FLATLAY" : "ON_MODEL");
+  // USP: both tees and track pants use unique designer flat-lays (never shared model plates).
+  const presentation = opts?.presentation ?? "FLATLAY";
   const visualKind =
-    opts?.visualKind ??
-    (isPants
-      ? "PANTS_FLATLAY_PREVIEW"
-      : presentation === "FLATLAY"
-        ? "TEE_FLATLAY_PREVIEW"
-        : "ON_MODEL_CPU_COMPOSITE");
+    opts?.visualKind ?? (isPants ? "PANTS_FLATLAY_PREVIEW" : "TEE_FLATLAY_PREVIEW");
   const origin =
-    visualKind === "PANTS_FLATLAY_PREVIEW"
-      ? "PANTS_FLATLAY_PREVIEW"
-      : visualKind === "TEE_FLATLAY_PREVIEW"
-        ? "TEE_FLATLAY_PREVIEW"
-        : "CPU_COMPOSITE_PREVIEW";
+    visualKind === "PANTS_FLATLAY_PREVIEW" ? "PANTS_FLATLAY_PREVIEW" : "TEE_FLATLAY_PREVIEW";
 
   const imagesJson: {
     src: string;
@@ -132,10 +124,10 @@ export async function registerOnModelMedia(
   await prisma.productMediaV2.updateMany({
     where: {
       productId: p.id,
-      visualKind: "TYPOGRAPHIC_FLAT",
+      visualKind: {in: ["TYPOGRAPHIC_FLAT", "ON_MODEL_CPU_COMPOSITE", "ON_MODEL_RASTER"]},
       storefrontVisible: true,
     },
-    data: {storefrontVisible: false, reviewState: "SUPERSEDED_BY_ON_MODEL"},
+    data: {storefrontVisible: false, reviewState: "SUPERSEDED_BY_DESIGNER_FLATLAY"},
   });
 
   await prisma.product.update({
@@ -145,14 +137,9 @@ export async function registerOnModelMedia(
         ...(meta ?? {}),
         designDna: dna,
         onModelGeneration: {
-          rendererVersion: opts?.rendererVersion ?? "cpu-garment-truth-v3",
+          rendererVersion: opts?.rendererVersion ?? "cpu-designer-flatlay-v5",
           generationSource:
-            opts?.generationSource ??
-            (visualKind === "PANTS_FLATLAY_PREVIEW"
-              ? "PANTS_FLATLAY"
-              : visualKind === "TEE_FLATLAY_PREVIEW"
-                ? "TEE_FLATLAY"
-                : "CPU_COMPOSITE"),
+            opts?.generationSource ?? (isPants ? "PANTS_FLATLAY" : "TEE_FLATLAY"),
           fingerprint,
           modelIdentityId: dna.modelIdentityId,
           presentation,
@@ -160,8 +147,9 @@ export async function registerOnModelMedia(
           garmentFamily: dna.garmentFamily,
           colourwayId: dna.colourwayId,
           colourHex: dna.colourHex,
+          usp: "DESIGNER_GARMENT_WITH_MINDSET_PRINT",
         },
-        visualVersion: opts?.rendererVersion ?? "cpu-garment-truth-v3",
+        visualVersion: opts?.rendererVersion ?? "cpu-designer-flatlay-v5",
       },
       images: imagesJson,
       displaySaleReady: true,
