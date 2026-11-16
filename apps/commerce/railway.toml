@@ -1,6 +1,7 @@
 # Railway config for Medusa API or worker — set Root Directory to apps/commerce.
 [build]
-builder = "NIXPACKS"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 # Nixpacks already runs `npm ci` from package-lock; avoid double-install EBUSY on CI cache.
 buildCommand = "npm run build"
 
