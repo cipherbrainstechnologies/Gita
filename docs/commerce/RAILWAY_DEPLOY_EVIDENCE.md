@@ -32,4 +32,4 @@ curl -sS https://medusa-api-production-4a0e47aa.up.railway.app/store/gita/health
 |---|---|
 | GO_CATALOG_ONLY (legacy Prisma storefront) | **GO** — unchanged default flags |
 | GO_PAID_PREORDERS | **NO-GO** — Medusa cart/payments not cut over |
-| Medusa staging healthy | **Pending** — re-check after Railway build fix deploy |
+| Medusa staging healthy | **Partial** — deploy `9e0857a8` migrations OK; public `/health` pending start-path fix (`d8a87cb+`) |

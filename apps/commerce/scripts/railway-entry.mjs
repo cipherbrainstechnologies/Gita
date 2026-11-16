@@ -8,9 +8,11 @@ const isWorker = name.includes("worker");
 process.env.MEDUSA_WORKER_MODE = isWorker ? "worker" : "server";
 if (isWorker) process.env.DISABLE_MEDUSA_ADMIN = "true";
 
+const start =
+  "cd .medusa/server && (npx medusa db:migrate || true) && npm run start";
 const command = isWorker
-  ? "npx medusa start"
-  : "npx medusa db:migrate && npx medusa start";
+  ? "cd .medusa/server && npm run start"
+  : `npx medusa db:migrate && ${start}`;
 
 console.log(
   `[gita-commerce-entry] service=${name} MEDUSA_WORKER_MODE=${process.env.MEDUSA_WORKER_MODE}`,
