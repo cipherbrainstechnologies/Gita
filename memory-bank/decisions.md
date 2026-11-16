@@ -50,7 +50,7 @@
 - Reversal Conditions: Managed GPU product on Railway with verified CUDA capacity.
 - Status: Active
 
-### Decision #006 � Customer account UX, DB cart and demo flags
+### Decision #006 — Customer account UX, DB cart and demo flags
 
 - Date: 2026-11-15
 - Author: Agent (customer UX task)
@@ -80,17 +80,7 @@
 - Reversal Conditions: Commissioned pants + colourway on-model library with aligned masks and model releases.
 - Status: Active
 
-### Decision #008 — 1,000 concept SKUs vs paid preorder gates
-
-- Date: 2026-11-15
-- Author: Cloud agent (CURSOR_EXECUTE_1000_PRODUCTS)
-- Summary: Import 1,000 `DesignBrief` rows into `Product` as `CONCEPT` with six disabled variants via idempotent seed; paginate `/shop` (30/page); stage ₹99 deposit via `DepositPolicy` and `PaymentIntentType.DEPOSIT` with default fail-closed (`enabled=false`, `ENABLE_DEPOSIT_CHECKOUT` off). No SKU becomes payment-eligible without PREORDER + enabled variant + external revenue gates.
-- Reason: Honest browse-scale catalog without pretending imagery, supplier proof or live charges are ready.
-- Affected Modules: `apps/web/prisma`, `scripts/seed-1000-product-concepts.ts`, `src/lib/catalog.ts`, `src/lib/checkout.ts`, deposit webhook
-- Reversal Conditions: Only after GPU media QA, supplier approvals, and legal/Razorpay sign-off documented in `docs/qa/REVENUE_GO_LIVE_GATES.md`.
-- Status: Active
-
-### Decision #010 — USP = designer tee/track + unique mindset print (flat-lay)
+### Decision #008 — Product USP: designer garments with mindset prints
 
 - Date: 2026-11-15
 - Author: Love Chauhan (product USP) via Agent
@@ -100,3 +90,12 @@
 - Reversal Conditions: Commissioned physical photography library with per-SKU releases; then flat-lay can become secondary preview.
 - Status: Active
 
+### Decision #010 — Medusa v2 as strangler commerce backend
+
+- Date: 2026-11-16
+- Author: Agent (Medusa enterprise architecture execution)
+- Summary: Add `apps/commerce` (Medusa 2.22.7) as the future canonical commerce engine. Keep `apps/web` as the public Next.js storefront. Introduce server-side commerce flags (`COMMERCE_BACKEND`, `MEDUSA_CATALOG_READ`, etc.) and `src/lib/commerce/` anti-corruption adapters. Custom `gita-bridge` module stores Gita↔Medusa ID maps and publication gates. No dual-write to Prisma catalog until an approved cutover.
+- Reason: Prisma monolith cannot scale to full OMS/CRM/admin without duplicating Medusa capabilities; strangler pattern preserves live Railway web while staging Medusa API+worker.
+- Affected Modules: `apps/commerce`, `apps/web/src/lib/commerce`, `infra/railway`, Railway `verse-mode` project
+- Reversal Conditions: Explicit product decision to remain Prisma-only (requires retiring Medusa services and adapters).
+- Status: Active

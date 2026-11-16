@@ -1,7 +1,9 @@
 import {notFound} from "next/navigation";
 import Link from "next/link";
+import type {Metadata} from "next";
 import {getProductBySlug, isSaleable} from "@/lib/catalog";
 import {checkoutEnabled} from "@/lib/config";
+import {productJsonLd} from "@/lib/seo/product-jsonld";
 import {auth} from "@/auth";
 import {AddToCart} from "@/components/AddToCart";
 import {GarmentArt} from "@/components/GarmentArt";
@@ -10,6 +12,27 @@ import {OnModelProductGallery} from "@/components/OnModelProductGallery";
 import {EditorialGallery} from "@/components/EditorialGallery";
 
 export const dynamic = "force-dynamic";
+
+const siteBase =
+  process.env.APP_BASE_URL?.replace(/\/$/, "") ?? "https://web-production-b2b81db7.up.railway.app";
+
+export async function generateMetadata({params}: {params: Promise<{slug: string}>}): Promise<Metadata> {
+  const {slug} = await params;
+  const p = await getProductBySlug(slug);
+  if (!p) return {title: "Product not found | VERSE//MODE"};
+  return {
+    title: `${p.name} | VERSE//MODE`,
+    description: p.designExplanation ?? p.line,
+    alternates: {canonical: `${siteBase}/shop/${slug}`},
+    openGraph: {
+      title: p.name,
+      description: p.line,
+      url: `${siteBase}/shop/${slug}`,
+      type: "website",
+    },
+    robots: p.orderable ? {index: true, follow: true} : {index: true, follow: true},
+  };
+}
 
 export default async function Product({params}: {params: Promise<{slug: string}>}) {
   const {slug} = await params;
@@ -22,8 +45,14 @@ export default async function Product({params}: {params: Promise<{slug: string}>
     `/checkout?product=${encodeURIComponent(p.slug)}&size=${encodeURIComponent(size)}`;
   const hasMedia = Boolean(p.media?.length);
 
+  const jsonLd = productJsonLd(p, siteBase);
+
   return (
     <div className="pdp page-wrap pdp-upgraded">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{__html: JSON.stringify(jsonLd)}}
+      />
       <div className="pdp-gallery">
         {hasMedia && p.media ? (
           p.source === "db" ? (
