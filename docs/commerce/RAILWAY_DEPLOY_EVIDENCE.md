@@ -32,4 +32,5 @@ curl -sS https://medusa-api-production-4a0e47aa.up.railway.app/store/gita/health
 |---|---|
 | GO_CATALOG_ONLY (legacy Prisma storefront) | **GO** — unchanged default flags |
 | GO_PAID_PREORDERS | **NO-GO** — Medusa cart/payments not cut over |
-| Medusa staging healthy | **GO** (HTTP) — `8e1bf84` deploy; `/health` returns Medusa; store routes need publishable API key |
+| Medusa staging healthy | **GO** — deploy `879980a9` (`d411417`); `/health` → OK; `/gita/health` → JSON |
+| Known warnings | `Local Event Bus` until Redis module wiring; `/store/*` needs publishable key |

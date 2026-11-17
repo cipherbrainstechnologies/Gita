@@ -11,10 +11,10 @@ if (isWorker) process.env.DISABLE_MEDUSA_ADMIN = "true";
 const start =
   "cd .medusa/server && (npx medusa db:migrate || true) && npm run start";
 const bootstrap =
-  "npx medusa exec ./src/scripts/seed-india-region.ts && npx medusa exec ./src/scripts/seed-gita-bootstrap.ts";
+  "npx medusa exec ./src/scripts/seed-india-region.ts; npx medusa exec ./src/scripts/seed-gita-bootstrap.ts";
 const command = isWorker
   ? "cd .medusa/server && npm run start"
-  : `npx medusa db:migrate && ${bootstrap} && ${start}`;
+  : `npx medusa db:migrate; ${bootstrap}; ${start}`;
 
 console.log(
   `[gita-commerce-entry] service=${name} MEDUSA_WORKER_MODE=${process.env.MEDUSA_WORKER_MODE}`,
