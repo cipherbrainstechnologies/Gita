@@ -2,7 +2,7 @@
 # Monorepo: set Railway Root Directory to apps/web (Gita repo root is NOT the Node app).
 # Worker is a SEPARATE Railway service from the same Root Directory: override Start Command with `npm run worker`
 # and remove the healthcheck + public domain (see Procfile / docs/engineering/INTEGRATIONS_AND_RAILWAY.md).
-# To build from the Dockerfile instead, set builder = "DOCKERFILE" (or remove this [build] block).
+# Optional full image: `Dockerfile.monorepo-build` (not auto-detected by Railway).
 [build]
 builder = "NIXPACKS"
 buildCommand = "npm ci && npx prisma generate && npm run build"
