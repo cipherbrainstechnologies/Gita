@@ -12,6 +12,7 @@
     "db:generate": "medusa db:generate gitaBridge",
     "db:migrate": "medusa db:migrate",
     "seed:india": "medusa exec ./src/scripts/seed-india-region.ts",
+    "seed:bootstrap": "medusa exec ./src/scripts/seed-gita-bootstrap.ts",
     "import:gita-catalog": "medusa exec ./src/scripts/gita-catalog-import.ts",
     "test:unit": "TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit",
     "test:integration:http": "TEST_TYPE=integration:http NODE_OPTIONS=--experimental-vm-modules jest --silent=false --runInBand --forceExit"
