@@ -213,7 +213,7 @@ export type CatalogProduct = {
   orderable: boolean;
   /** Unique storefront preview registered; waitlist/reservation UX — not live payment. */
   displaySaleReady?: boolean;
-  source: "db" | "sample";
+  source: "db" | "sample" | "medusa";
   variants: CatalogVariant[];
   media?: ConceptMedia[];
   theme?: string;
@@ -413,6 +413,12 @@ export async function getOrderableProducts(): Promise<CatalogProduct[]> {
  * Lightweight legacy list for checkout/cart/home. Uses pagination when the DB catalog is large.
  */
 export async function getCatalogProducts(): Promise<CatalogProduct[]> {
+  const {shouldReadMedusaCatalog, shadowCompareCatalog} = await import("./commerce/catalog-gateway");
+  const {listCatalogFromMedusa} = await import("./commerce/medusa-catalog-adapter");
+  if (shouldReadMedusaCatalog()) {
+    const medusaItems = await listCatalogFromMedusa();
+    if (medusaItems.length) return medusaItems;
+  }
   if (!process.env.DATABASE_URL) return sampleConcepts.map(fromSample);
   try {
     const {prisma} = await import("./db");
@@ -432,13 +438,24 @@ export async function getCatalogProducts(): Promise<CatalogProduct[]> {
       }),
       4000,
     );
-    return mergeEditorialSamples(rows.map((r) => fromDb(r)));
+    const legacyItems = mergeEditorialSamples(rows.map((r) => fromDb(r)));
+    if (shouldReadMedusaCatalog()) {
+      const medusaItems = await listCatalogFromMedusa();
+      void shadowCompareCatalog(legacyItems, medusaItems);
+    }
+    return legacyItems;
   } catch {
     return sampleConcepts.map(fromSample);
   }
 }
 
 export async function getProductBySlug(slug: string): Promise<CatalogProduct | null> {
+  const {shouldReadMedusaCatalog} = await import("./commerce/catalog-gateway");
+  const {getProductFromMedusa} = await import("./commerce/medusa-catalog-adapter");
+  if (shouldReadMedusaCatalog()) {
+    const medusa = await getProductFromMedusa(slug);
+    if (medusa) return medusa;
+  }
   const sample = sampleConcepts.find((x) => x.slug === slug);
   if (!process.env.DATABASE_URL) return sample ? fromSample(sample) : null;
   try {

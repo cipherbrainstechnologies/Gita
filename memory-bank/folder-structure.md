@@ -5,7 +5,8 @@
 ```text
 Gita/                              # monorepo root (git remote: Gita)
 ├── apps/
-│   └── web/                       # deployable commerce app (was VERSE_MODE_Cursor_Kit)
+│   ├── web/                       # deployable Next.js storefront (legacy + BFF adapters)
+│   └── commerce/                  # Medusa v2 headless commerce (canonical target)
 ├── services/
 │   └── gpu-inference/             # GPU HTTP APIs (product-owned; wraps vendor models)
 │       ├── app/                   # gateway scaffold

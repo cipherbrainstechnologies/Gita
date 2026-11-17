@@ -10,6 +10,8 @@
 |---------|------|-------|
 | `web` | Next.js storefront + API | `node scripts/railway-entry.mjs` → migrate + `next start` |
 | `worker` | BullMQ studio assembler | same entry → `npm run worker` when `RAILWAY_SERVICE_NAME` contains `worker` |
+| `medusa-api` | Medusa HTTP + Admin | `apps/commerce` → `node scripts/railway-entry.mjs` (`MEDUSA_WORKER_MODE=server`) |
+| `medusa-worker` | Medusa jobs/subscribers | same image, service name contains `worker` |
 | `Postgres` | Prisma authority | managed |
 | `Redis` | BullMQ | managed |
 

@@ -9,6 +9,7 @@
 | Layer | Path | Role | Deploys? |
 |-------|------|------|----------|
 | Commerce web + API + worker | `apps/web` | Next.js App Router, Prisma, Auth.js, BullMQ worker | **Yes — Railway** (`web` + `worker`) |
+| Medusa commerce API + worker | `apps/commerce` | Medusa v2 headless OMS/PIM (strangler target) | **Yes — Railway** (`medusa-api` + `medusa-worker`, staging) |
 | GPU inference gateway | `services/gpu-inference` | Thin FastAPI (or equivalent) over try-on / design pipelines | **Yes — separate GPU host**, never Railway web container |
 | Upstream Diffusers | `vendor/diffusers` | Hugging Face Diffusers (Apache-2.0 code; model licenses separate) | No — library dependency for GPU service |
 | Upstream FASHN VTON | `vendor/fashn-vton-1.5` | Maskless virtual try-on inference | No — library dependency for GPU service |
