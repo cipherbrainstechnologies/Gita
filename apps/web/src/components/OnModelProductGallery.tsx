@@ -29,16 +29,14 @@ export function OnModelProductGallery({images, productName, disclosure}: Props) 
           unoptimized={current.src.includes("/api/catalog/on-model/")}
         />
         <span className="editorial-watermark editorial-watermark-compact">
-          {isPhotoSample ? PHOTO_SAMPLE_WATERMARK : "Digital garment preview"}
+          {isPhotoSample ? PHOTO_SAMPLE_WATERMARK : "Digital preview · final garment confirmed before payment"}
         </span>
       </div>
       {disclosure && (
         <details className="pdp-disclosure-details">
-          <summary>Product photography notes</summary>
+          <summary>About this preview</summary>
           <p className="small-note pdp-disclosure">{disclosure}</p>
-          {!isPhotoSample && (
-            <p className="small-note">{MODEL_PREVIEW_WATERMARK}</p>
-          )}
+          {!isPhotoSample && <p className="small-note">{MODEL_PREVIEW_WATERMARK}</p>}
         </details>
       )}
       <div className="editorial-thumbs" role="group" aria-label={`${productName} image views`}>

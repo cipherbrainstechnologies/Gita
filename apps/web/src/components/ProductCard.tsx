@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {useState} from "react";
 import type {CatalogProduct} from "@/lib/catalog";
+import {WishlistHeart} from "./WishlistHeart";
 
 export function ProductCard({product}: {product: CatalogProduct}) {
   const front =
@@ -40,6 +41,7 @@ export function ProductCard({product}: {product: CatalogProduct}) {
       onBlur={() => setHover(false)}
     >
       <div className={`product-image ${cover ? "product-image-real" : ""}`}>
+        <WishlistHeart slug={product.slug} label={product.name} />
         <div className="chip">{chip}</div>
         {cover ? (
           <Image

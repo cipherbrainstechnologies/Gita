@@ -31,6 +31,8 @@
     "offline:catalog-render": "tsx scripts/offline-catalog-render.ts",
     "audit:on-model-catalog": "tsx scripts/audit-on-model-catalog.ts",
     "pilot:apparel-visual-20": "tsx scripts/pilot-apparel-visual-20.ts",
+    "fashion:seed-1000": "tsx scripts/fashion-seed-1000.ts",
+    "fashion:baseline": "tsx scripts/fashion-relaunch-baseline.ts",
     "batch:on-model": "tsx scripts/batch-on-model-render.ts",
     "db:seed:demo": "tsx scripts/seed-demo.ts",
     "db:seed:v2-content": "tsx scripts/seed-v2-content.ts",

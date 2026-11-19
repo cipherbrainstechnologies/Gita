@@ -226,6 +226,8 @@ export type CatalogProduct = {
   fabricTarget?: string;
 };
 
+export type CatalogSort = "featured" | "newest" | "price-asc" | "price-desc";
+
 export type CatalogQueryInput = {
   page?: number;
   pageSize?: number;
@@ -233,6 +235,8 @@ export type CatalogQueryInput = {
   theme?: string;
   fit?: string;
   audienceFit?: string;
+  palette?: string;
+  sort?: CatalogSort;
   q?: string;
 };
 
@@ -349,6 +353,7 @@ function catalogWhere(input: CatalogQueryInput): Prisma.ProductWhereInput {
   if (input.theme?.trim()) where.theme = input.theme.trim().toUpperCase();
   if (input.audienceFit?.trim()) where.audienceFit = input.audienceFit.trim();
   if (input.fit?.trim()) where.variants = {some: {fit: {contains: input.fit.trim(), mode: "insensitive"}}};
+  if (input.palette?.trim()) where.palette = {equals: input.palette.trim().toLowerCase(), mode: "insensitive"};
   const q = input.q?.trim();
   if (q) {
     where.OR = [
@@ -375,7 +380,7 @@ export async function queryCatalogPage(input: CatalogQueryInput = {}): Promise<C
         prisma.product.findMany({
           where,
           include: {variants: {orderBy: {sku: "asc"}}},
-          orderBy: [{createdAt: "desc"}, {slug: "asc"}],
+          orderBy: catalogOrderBy(input.sort),
           skip: (page - 1) * pageSize,
           take: pageSize,
         }),
@@ -384,7 +389,8 @@ export async function queryCatalogPage(input: CatalogQueryInput = {}): Promise<C
     );
     const {loadStorefrontMediaForProducts} = await import("./catalog-media");
     const mediaByProduct = await loadStorefrontMediaForProducts(rows.map((r) => r.id));
-    const items = rows.map((r) => fromDb(r, mediaByProduct.get(r.id)));
+    let items = rows.map((r) => fromDb(r, mediaByProduct.get(r.id)));
+    items = sortCatalogItems(items, input.sort);
     return {items, total, page, pageSize, orderableOnPage: items.filter((p) => p.orderable).length};
   } catch {
     return null;
@@ -446,6 +452,49 @@ export async function getCatalogProducts(): Promise<CatalogProduct[]> {
     return legacyItems;
   } catch {
     return sampleConcepts.map(fromSample);
+  }
+}
+
+function catalogOrderBy(sort?: CatalogSort): Prisma.ProductOrderByWithRelationInput[] {
+  if (sort === "newest") return [{publishedAt: "desc"}, {createdAt: "desc"}, {slug: "asc"}];
+  return [{displaySaleReady: "desc"}, {publishedAt: "desc"}, {createdAt: "desc"}, {slug: "asc"}];
+}
+
+function sortCatalogItems(items: CatalogProduct[], sort?: CatalogSort): CatalogProduct[] {
+  const copy = [...items];
+  if (sort === "price-asc") {
+    copy.sort((a, b) => (a.priceInr ?? Number.MAX_SAFE_INTEGER) - (b.priceInr ?? Number.MAX_SAFE_INTEGER));
+  } else if (sort === "price-desc") {
+    copy.sort((a, b) => (b.priceInr ?? 0) - (a.priceInr ?? 0));
+  } else if (sort === "featured") {
+    copy.sort((a, b) => {
+      const rank = (p: CatalogProduct) =>
+        (p.orderable ? 4 : 0) + (p.displaySaleReady ? 2 : 0) + (p.media?.length ? 1 : 0);
+      return rank(b) - rank(a) || (b.slug < a.slug ? 1 : -1);
+    });
+  }
+  return copy;
+}
+
+/** Prisma-only product read — used by Medusa adapter enrichment (no Medusa round-trip). */
+export async function getProductBySlugFromPrisma(slug: string): Promise<CatalogProduct | null> {
+  const sample = sampleConcepts.find((x) => x.slug === slug);
+  if (!process.env.DATABASE_URL) return sample ? fromSample(sample) : null;
+  try {
+    const {prisma} = await import("./db");
+    const {loadProductMedia} = await import("./catalog-media");
+    const row = await withTimeout(
+      prisma.product.findFirst({
+        where: {slug, status: {not: "ARCHIVED"}},
+        include: {variants: {orderBy: {sku: "asc"}}},
+      }),
+      3000,
+    );
+    if (!row) return sample ? fromSample(sample) : null;
+    const media = await loadProductMedia(row.id, slug);
+    return fromDb(row, media);
+  } catch {
+    return sample ? fromSample(sample) : null;
   }
 }
 
