@@ -1,6 +1,6 @@
 # Fashion relaunch baseline
 
-- **Git HEAD:** `60c07f506a7eadb630492a151a68ffc507778188`
+- **Git HEAD:** `c57bf6933ea94246117823438f26a2ff4c53da83`
 - **Generated:** 2026-11-19T21:40:06.456Z
 - **Production URL (expected):** https://web-production-b2b81db7.up.railway.app/shop
 
