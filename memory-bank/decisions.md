@@ -99,3 +99,13 @@
 - Affected Modules: `apps/commerce`, `apps/web/src/lib/commerce`, `infra/railway`, Railway `verse-mode` project
 - Reversal Conditions: Explicit product decision to remain Prisma-only (requires retiring Medusa services and adapters).
 - Status: Active
+
+### Decision #011 — Fashion storefront relaunch (mobile-first retail UX)
+
+- Date: 2026-11-19
+- Author: Agent (GITA_COMPLETE_FASHION_STOREFRONT execution)
+- Summary: Ship mobile-first shop/PDP/home revamp with 2-column product grid, category chips, filter/sort sheet, wishlist hearts, PDP sticky CTA, inline interest form (no payment), consumer accordions, `/designs` archive and `/how-preorder-works`. Fix Medusa catalog adapter to map `gita_*` metadata and enrich from Prisma by slug; shadow diff reports category/palette/status mismatches. Demo banner credentials suppressed unless `DEMO_AUTH` is on; production announcement copy is consumer-facing.
+- Reason: Live storefront read as engineering demo (demo banner, media checklist, flat pant vectors) rather than a fashion shop.
+- Affected Modules: `apps/web` storefront components, `medusa-catalog-adapter`, `catalog.ts` query/sort, `docs/qa/FASHION_RELAUNCH_BASELINE.md`
+- Reversal Conditions: Full Medusa catalog cutover with metadata populated at import time may retire Prisma enrichment path.
+- Status: Active
