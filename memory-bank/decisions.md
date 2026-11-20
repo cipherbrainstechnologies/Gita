@@ -109,3 +109,13 @@
 - Affected Modules: `apps/web` storefront components, `medusa-catalog-adapter`, `catalog.ts` query/sort, `docs/qa/FASHION_RELAUNCH_BASELINE.md`
 - Reversal Conditions: Full Medusa catalog cutover with metadata populated at import time may retire Prisma enrichment path.
 - Status: Active
+
+### Decision #012 — Railway web/worker deploy from `main` only
+
+- Date: 2026-11-20
+- Author: Agent (deploy follow-up)
+- Summary: Production `web` and `worker` Git source is `cipherbrainstechnologies/Gita` branch **`main`**, `rootDirectory` `apps/web`, **no commit pin** — every merge to `main` auto-deploys. Feature branches merge via PR; do not leave services on long-lived deploy branches or pinned SHAs.
+- Reason: `web` had been on `cursor/medusa-commerce-strangler-v1-295b` and briefly pinned to a single merge commit, which blocked continuous delivery from `main`.
+- Affected Modules: Railway `verse-mode` web + worker, `infra/railway`
+- Reversal Conditions: Staging-only canary branch with explicit owner approval and documented rollback.
+- Status: Active
